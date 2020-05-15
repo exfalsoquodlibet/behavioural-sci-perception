@@ -10,7 +10,7 @@ venv/*
 docs/notes_to_self/
 
 # secret files
-etc/secrets/*
+docs/etc/secrets/*
 .secrets
 
 # Byte-compiled / optimized / DLL files
