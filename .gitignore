@@ -10,8 +10,9 @@ venv/*
 docs/notes_to_self/
 
 # secret files
-docs/etc/secrets/*
+docs/ext/secrets/*
 .secrets
+docs/ext/secrets/api_keys.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
