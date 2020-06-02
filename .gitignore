@@ -18,6 +18,8 @@ docs/ext/secrets/api_keys.json
 __pycache__/
 *.py[cod]
 
+# qualitative reserch docs
+qual/
 
 # Unit test / coverage reports
 .cache
