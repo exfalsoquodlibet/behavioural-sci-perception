@@ -5,7 +5,7 @@ from src.utils import chain_functions
 
 from src.preproc_text import tokenise_sent, tokenise_word, \
     _get_wordnet_pos, tag_pos, lemmatise, remove_stopwords, _fix_neg_auxiliary, remove_punctuation, \
-    clean_tweet_quibbles, flatten_irregular_listoflists, detokenise_list
+    clean_tweet_quibbles, flatten_irregular_listoflists, detokenise_list, split_string_at_uppercase
 
 args_tokenise_sent = [("I don't think. Then you shouldn't talk.",
                        ["I don't think.", "Then you shouldn't talk."]),
@@ -167,9 +167,13 @@ def test_remove_punctuation_and_text_preprocess(text, expected):
     assert remove_punctuation(tokenise_word(tokenise_sent(text))) == expected
 
 
-@pytest.mark.parametrize("text,expected", [(
-    "<strong>Hey</strong>, \n please visit\n www.random_site.come or http://www.another_random_site.gov.uk or dm @UserName &#1234; .* Thanks!*",
-    "Hey, please visit or or dm . Thanks!")])
+@pytest.mark.parametrize("text,expected", [
+    ("<strong>Hey</strong>, \n please visit\n www.random_site.come or http://www.another_random_site.gov.uk or dm @UserName &#1234; .* Thanks!*",
+     "Hey, please visit or or dm . Thanks!"),
+    ("@DADNews @mytvnews @namesurname @AAA \n\nAny chance of a mention for the sake of balance?\n\n#COVID19 #Coronavirus #PartyOut #RandomState #RandomStateUK #MassSurveillance\n#BehavioralScience #behavioraleconomics #AAA #RevolutionNow #Cen...",
+     "Any chance of a mention for the sake of balance? COVID19 Coronavirus PartyOut RandomState RandomStateUK MassSurveillance BehavioralScience behavioraleconomics AAA RevolutionNow Cen..."
+     )
+])
 def test_clean_tweet_quibbles(text, expected):
     assert clean_tweet_quibbles(text) == expected
 
@@ -179,6 +183,14 @@ def test_clean_tweet_quibbles(text, expected):
     ["Hey, please visit or or dm .", "Thanks!", "Best regards"])])
 def test_clean_tweet_quibbles_and_tokenise_sent(text, expected):
     assert tokenise_sent(clean_tweet_quibbles(text)) == expected
+
+
+@pytest.mark.parametrize("text,expected",
+                         [("BehaviouralScience", " Behavioural Science"),
+                          ("StopEverySadFace", " Stop Every Sad Face"),
+                          ("COVID19", " C O V I D19")])
+def test_split_string_at_uppercase(text, expected):
+    assert split_string_at_uppercase(text) == expected
 
 
 @pytest.mark.parametrize("input,expected",
