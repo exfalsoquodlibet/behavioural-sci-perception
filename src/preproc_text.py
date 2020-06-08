@@ -236,7 +236,9 @@ def clean_tweet_quibbles(text: str) -> str:
     - anything between <>, including '<' and '>'
     - '**', '*'
     - universal character unicodes: '&#nnnn;'
-    - URLs and email addresses
+    - URLs
+    - User mentioned (@User_Mentioned)
+    - #
 
     Args:
         text:   A tweet.
@@ -267,7 +269,24 @@ def clean_tweet_quibbles(text: str) -> str:
     # remove user mentioned
     text = re.sub(r'@[\S]+.', '', text)
 
+    # remove #
+    text = re.sub(r'#', '', text)
+
     return ' '.join(text.split())
+
+
+def split_string_at_uppercase(text: str) -> str:
+    """
+    Inserts a space before each uppercase letter.
+
+    Args:
+        text:   A tweet.
+
+    Returns:
+        The tweet whose combined upper-cased strings
+        (e.g., BehaviouralScience) have been split (i.e., Behavioural Science).
+    """
+    return re.sub(r"([A-Z])", r" \1", text)
 
 
 def flatten_irregular_listoflists(list_lists: List[List]) -> List[str]:
