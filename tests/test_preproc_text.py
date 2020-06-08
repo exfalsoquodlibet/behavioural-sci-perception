@@ -5,7 +5,8 @@ from src.utils import chain_functions
 
 from src.preproc_text import tokenise_sent, tokenise_word, \
     _get_wordnet_pos, tag_pos, lemmatise, remove_stopwords, _fix_neg_auxiliary, remove_punctuation, \
-    clean_tweet_quibbles, flatten_irregular_listoflists, detokenise_list, split_string_at_uppercase
+    clean_tweet_quibbles, flatten_irregular_listoflists, detokenise_list, split_string_at_uppercase, \
+    remove_digits, remove_single_characters
 
 args_tokenise_sent = [("I don't think. Then you shouldn't talk.",
                        ["I don't think.", "Then you shouldn't talk."]),
@@ -191,6 +192,20 @@ def test_clean_tweet_quibbles_and_tokenise_sent(text, expected):
                           ("COVID19", " C O V I D19")])
 def test_split_string_at_uppercase(text, expected):
     assert split_string_at_uppercase(text) == expected
+
+
+@pytest.mark.parametrize("text,expected", [("asjdg123bh78", "asjdgbh"),
+                                           ("7th may 2020", "th may "),
+                                           ("COVID19", "COVID")])
+def test_remove_digits(text, expected):
+    assert remove_digits(text) == expected
+
+
+@pytest.mark.parametrize("text,expected",
+                         [("i to four s kkk y", "to four kkk"), ("i", ""),
+                          ("nothing to remove", "nothing to remove")])
+def test_remove_single_characters(text, expected):
+    assert remove_single_characters(text) == expected
 
 
 @pytest.mark.parametrize("input,expected",
