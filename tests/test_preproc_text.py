@@ -6,7 +6,7 @@ from src.utils import chain_functions
 from src.preproc_text import tokenise_sent, tokenise_word, \
     _get_wordnet_pos, tag_pos, lemmatise, remove_stopwords, _fix_neg_auxiliary, remove_punctuation, \
     clean_tweet_quibbles, flatten_irregular_listoflists, detokenise_list, split_string_at_uppercase, \
-    remove_digits, remove_single_characters
+    remove_digits, remove_single_characters, split_lowercase_compounds, break_compound_words
 
 args_tokenise_sent = [("I don't think. Then you shouldn't talk.",
                        ["I don't think.", "Then you shouldn't talk."]),
@@ -208,6 +208,31 @@ def test_remove_single_characters(text, expected):
     assert remove_single_characters(text) == expected
 
 
+@pytest.mark.parametrize(
+    "text,expected",
+    [("@YOU @andyou Check out www.url.co.uk by 7 june #WeCanDoIt!",
+      "Check out by june We Can Do It!"),
+     ("#Amazing\nStuff!!! Join aaa17 I o u #RestaurantEndUniverse42",
+      "Amazing Stuff!!! Join aaa Restaurant End Universe")])
+def test_tweet_text_preproc_integrated(text, expected):
+    functions_chain = chain_functions(clean_tweet_quibbles,
+                                      split_string_at_uppercase, remove_digits,
+                                      remove_single_characters)
+    assert functions_chain(text) == remove_single_characters(
+        remove_digits(split_string_at_uppercase(clean_tweet_quibbles(text))))
+    assert functions_chain(text) == expected
+
+
+@pytest.mark.parametrize(
+    "text,expected",
+    [("some random words", "some random words"),
+     ("random behaviouraleconomics stuff",
+      "random behavioural economics stuff"),
+     ("behaviorchange socialdistancing", "behavior change social distancing")])
+def test_split_lowercase_compounds(text, expected):
+    assert split_lowercase_compounds(text) == expected
+
+
 @pytest.mark.parametrize("input,expected",
                          [(['a', 'b', [], ['c'], [['d']], [['e'], ['f']]], [
                              'a',
@@ -227,3 +252,14 @@ def test_flatten_irregular_listoflists(input, expected):
        ], "i do not think then you should not talk")])
 def test_detokenise_list(input, expected):
     assert detokenise_list(input) == expected
+
+
+@pytest.mark.parametrize("text,expected",
+                         [("some random words", "some random words"),
+                          ("random_behavioural_economics stuff",
+                           "random behavioural economics stuff"),
+                          ("sad_face_with_tears!", "sad face with tears!"),
+                          ("sad_face_with_tears. and other stuff.",
+                           "sad face with tears. and other stuff.")])
+def test_break_compound_words(text, expected):
+    assert break_compound_words(text, symbol="_") == expected
