@@ -5,7 +5,7 @@ from src.utils import chain_functions
 
 from src.preproc_text import tokenise_sent, tokenise_word, \
     _get_wordnet_pos, tag_pos, lemmatise, remove_stopwords, _fix_neg_auxiliary, remove_punctuation, \
-    clean_vacancies_quibbles, flatten_irregular_listoflists, detokenise_list
+    clean_tweet_quibbles, flatten_irregular_listoflists, detokenise_list
 
 args_tokenise_sent = [("I don't think. Then you shouldn't talk.",
                        ["I don't think.", "Then you shouldn't talk."]),
@@ -168,17 +168,17 @@ def test_remove_punctuation_and_text_preprocess(text, expected):
 
 
 @pytest.mark.parametrize("text,expected", [(
-    "<strong>Hello**</strong>, \n please visit\n www.random_site.come or http://www.another_random_site.gov.uk or email random_email@random.gov.uk &#1234; .* Thanks! Best regards*",
-    "Hello, please visit or or email . Thanks! Best regards")])
-def test_clean_vacancies_quibbles(text, expected):
-    assert clean_vacancies_quibbles(text) == expected
+    "<strong>Hey</strong>, \n please visit\n www.random_site.come or http://www.another_random_site.gov.uk or dm @UserName &#1234; .* Thanks!*",
+    "Hey, please visit or or dm . Thanks!")])
+def test_clean_tweet_quibbles(text, expected):
+    assert clean_tweet_quibbles(text) == expected
 
 
 @pytest.mark.parametrize("text,expected", [(
-    "<strong>Hello**</strong>, \n please visit\n www.random_site.come or http://www.another_random_site.gov.uk or email random_email@random.gov.uk &#1234; .* Thanks! Best regards*",
-    ["Hello, please visit or or email .", "Thanks!", "Best regards"])])
-def test_clean_vacancies_quibbles_and_tokenise_sent(text, expected):
-    assert tokenise_sent(clean_vacancies_quibbles(text)) == expected
+    "<strong>Hey**</strong>, \n please visit\n www.random_site.come or http://www.another_random_site.gov.uk or dm @UserName &#1234; &#1234; .* Thanks! Best regards*",
+    ["Hey, please visit or or dm .", "Thanks!", "Best regards"])])
+def test_clean_tweet_quibbles_and_tokenise_sent(text, expected):
+    assert tokenise_sent(clean_tweet_quibbles(text)) == expected
 
 
 @pytest.mark.parametrize("input,expected",

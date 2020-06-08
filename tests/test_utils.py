@@ -1,10 +1,6 @@
 import pytest
-import pandas as pd
-import numpy as np
 from typing import Callable
-from pandas.testing import assert_frame_equal
-from src.utils.make_pipeline import chain_2funcs, chain_functions
-from src.make_data.preproc import replace_nan, to_lower_textfields, to_lower_cols
+from src.utils import chain_2funcs, chain_functions
 
 
 def f1(n: int) -> str:
@@ -59,46 +55,3 @@ args_chain_functions_expected = [
 def test_chain_functions_expected(test_input_funcs, test_input, test_expected):
     chained_funcs = chain_functions(*test_input_funcs)
     assert chained_funcs(test_input) == test_expected
-
-
-dummy_df = pd.DataFrame({
-    'Role': ['xx', 'Zzz', 'Z zz', 'z', np.nan, np.nan, '', ''],
-    'Role leVEL': ['YYY', '', np.nan, 'Ss S', np.nan, np.nan, 'J', 'q qq'],
-    'role name': ['g', '', '', 't', 'o ooo', 'aa a a', 'u', 'd'],
-    'Int_Col': [1, 2, 3, np.nan, 5, 6, 7, 8]
-})
-
-example_pipeline_1 = chain_functions(to_lower_cols, to_lower_textfields,
-                                     replace_nan)
-
-
-def test_chain_functions_integrated_1():
-    assert isinstance(example_pipeline_1, Callable)
-    assert_frame_equal(
-        example_pipeline_1(dummy_df),
-        replace_nan(to_lower_textfields(to_lower_cols(dummy_df))))
-    assert_frame_equal(
-        example_pipeline_1(dummy_df),
-        pd.DataFrame({
-            'role': ['xx', 'zzz', 'z zz', 'z', '', '', '', ''],
-            'role level': ['yyy', '', '', 'ss s', '', '', 'j', 'q qq'],
-            'role name': ['g', '', '', 't', 'o ooo', 'aa a a', 'u', 'd'],
-            'int_col': [1, 2, 3, np.nan, 5, 6, 7, 8]
-        }))
-
-
-example_pipeline_2 = chain_functions(
-    to_lower_cols, to_lower_textfields,
-    lambda x: replace_nan(x, only_these_cols='role'))
-
-
-def test_chain_functions_integrated_2():
-    assert_frame_equal(
-        example_pipeline_2(dummy_df),
-        pd.DataFrame({
-            'role': ['xx', 'zzz', 'z zz', 'z', '', '', '', ''],
-            'role level':
-            ['yyy', '', np.nan, 'ss s', np.nan, np.nan, 'j', 'q qq'],
-            'role name': ['g', '', '', 't', 'o ooo', 'aa a a', 'u', 'd'],
-            'int_col': [1, 2, 3, np.nan, 5, 6, 7, 8]
-        }))
