@@ -12,10 +12,23 @@ from nltk.stem import WordNetLemmatizer
 from nltk import pos_tag
 from nltk.corpus import stopwords
 
+from emot.emo_unicode import UNICODE_EMO, EMOTICONS
+
 wordnet_lemmatiser = WordNetLemmatizer()
 
 # Constants
 BASIC_STOPWORDS = stopwords.words("english")
+
+COMPOUND_STRINGS = {
+    "socialdistancing": "social distancing",
+    "behavioralscience": "behavioral science",
+    "behaviouralscience": "behavioural science",
+    "behavioraleconomics": "behavioral economics",
+    "behaviouraleconomics": "behavioural economics",
+    "handwashing": "hand washing",
+    "behaviourchange": "behaviour change",
+    "behaviorchange": "behavior change"
+}
 
 
 def tokenise_sent(text: str) -> List[str]:
@@ -339,6 +352,23 @@ def remove_single_characters(text: str) -> str:
     return ' '.join([w for w in text.split() if len(w) > 1])
 
 
+def split_lowercase_compounds(text: str) -> str:
+    """
+    Splits specific compounded strings into constituting words.
+
+    Example:
+    "behaviouraleconomics" -> "behavioural economics
+
+    Args:
+        text:   A string of text (e.g., a tweet).
+
+    Returns:
+        The tweet whose combined lower-case strings have been split.
+    """
+
+    return ' '.join([COMPOUND_STRINGS.get(w, w) for w in text.split()])
+
+
 def detokenise_list(list_strings: List[str]) -> str:
     """
     Concatenates all the strings in a list of strings into a single string of text.
@@ -353,3 +383,57 @@ def detokenise_list(list_strings: List[str]) -> str:
     """
 
     return " ".join(list_strings)
+
+
+def convert_emojis(text):
+    """
+    Converts emojis with corresponding description.
+
+    From: https://medium.com/towards-artificial-intelligence/emoticon-and-emoji-in-text-mining-7392c49f596a
+
+    Args:
+        text:   A string of text (e.g., a tweet).
+
+    Returns:
+        The text with occurring emojis replaced with their text description.
+    """
+    for emot in UNICODE_EMO:
+        text = text.replace(
+            emot, "_".join(UNICODE_EMO[emot].replace(",",
+                                                     "").replace(":",
+                                                                 "").split()))
+    return text
+
+
+def convert_emoticons(text):
+    """
+    Converts emoticons with corresponding description.
+
+    From: https://medium.com/towards-artificial-intelligence/emoticon-and-emoji-in-text-mining-7392c49f596a
+
+    Args:
+        text:   A string of text (e.g., a tweet).
+
+    Returns:
+        The text with occurring emojis replaced with their text description.
+    """
+    for emot in EMOTICONS:
+        text = re.sub(u'(' + emot + ')',
+                      "_".join(EMOTICONS[emot].replace(",", "").split()), text)
+
+    return text
+
+
+def break_compound_words(text: str, symbol: str = "_") -> str:
+    """
+    Funcion to break words of the compound form word1<symbol>word2 into the constituting words,
+    then remove resulting empty strings.
+
+    Args:
+        text:   A string of text (e.g., a tweet).
+        symbol: The symbol that combines words word1<symbol>word2, default is underscore "_".
+
+    Returns:
+        The text.
+    """
+    return ' '.join(re.sub(symbol, r" ", word) for word in text.split())
