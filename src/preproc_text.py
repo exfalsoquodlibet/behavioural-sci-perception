@@ -229,9 +229,9 @@ def remove_punctuation(parag: List[List[str]],
     return output_parag
 
 
-def clean_vacancies_quibbles(text: str) -> str:
+def clean_tweet_quibbles(text: str) -> str:
     """
-    Removes parts of text that are specific to the job descriptions in the vacancies data:
+    Removes parts of text that are specific to tweets' text:
     - line breaks symbols: '\n', '\r'
     - anything between <>, including '<' and '>'
     - '**', '*'
@@ -239,11 +239,11 @@ def clean_vacancies_quibbles(text: str) -> str:
     - URLs and email addresses
 
     Args:
-        text:   A paragraph of text.
+        text:   A tweet.
 
     Returns:
-        The paragaph cleaned of ine breaks symbols, html < > elements, asteriks, universal character unicodes,
-        URLs, and email addresses.
+        The tweet text cleaned of line breaks symbols, html < > elements, asteriks, universal character unicodes,
+        URLs, and user mentioned.
     """
 
     # ascii encoding
@@ -264,8 +264,8 @@ def clean_vacancies_quibbles(text: str) -> str:
     # remove URLs
     text = re.sub(r'http\S+|www\S+', '', text)
 
-    # remove email addresses
-    text = re.sub(r'\S*@\S*\s?', '', text)
+    # remove user mentioned
+    text = re.sub(r'@[\S]+.', '', text)
 
     return ' '.join(text.split())
 
