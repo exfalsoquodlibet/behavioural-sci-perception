@@ -241,7 +241,7 @@ def clean_tweet_quibbles(text: str) -> str:
     - #
 
     Args:
-        text:   A tweet.
+        text:   A string of text (e.g., a tweet).
 
     Returns:
         The tweet text cleaned of line breaks symbols, html < > elements, asteriks, universal character unicodes,
@@ -280,7 +280,7 @@ def split_string_at_uppercase(text: str) -> str:
     Inserts a space before each uppercase letter.
 
     Args:
-        text:   A tweet.
+        text:   A string of text (e.g., a tweet).
 
     Returns:
         The tweet whose combined upper-cased strings
@@ -308,6 +308,35 @@ def flatten_irregular_listoflists(list_lists: List[List]) -> List[str]:
             yield from flatten_irregular_listoflists(elem)
         else:
             yield elem
+
+
+def remove_digits(text: str) -> str:
+    """
+    Removes digits from a string.
+
+    Args:
+        text:   a string of text (e.g., a tweet).
+
+    Returns:
+        The text removed of character digits.
+    """
+    return ''.join([char for char in text if not char.isdigit()])
+
+
+def remove_single_characters(text: str) -> str:
+    """
+    Removes single characters from a string of text.
+
+    Example:
+    "i to four s kkk y" -> "to four kkk"
+
+    Args:
+        text:   a string of text (e.g., a tweet).
+
+    Returns:
+        The text removed of single-character words.
+    """
+    return ' '.join([w for w in text.split() if len(w) > 1])
 
 
 def detokenise_list(list_strings: List[str]) -> str:
