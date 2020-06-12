@@ -17,18 +17,23 @@ def get_sentiment_score_VDR(text: List[str],
     Args:
         text :          a paragraph of text as a list of string sentences. ["I think.", "Therefore, I am."]
 
-        score_type :    'compound' (default), 'pos' or 'neg'
+        score_type :    'compound' (default), 'all' (i.e., pos, neg, neu)
 
     Returns:
         A list of sentiment scores in the [-1.0, 1.0] range.
     """
 
+    if score_type == 'all':
+        score_type = ['pos', 'neu', 'neg']
+
     try:
-        scores = [
-            np.nan if len(s) == 0 else analyser.polarity_scores(s)[score_type]
-            for s in text
-        ]
-        return scores
+        score = np.nan if len(text) == 0 else {
+            k: v
+            for k, v in analyser.polarity_scores(text).items()
+            if k in score_type
+        }
+
+        return score
 
     except TypeError as e:
         return e
