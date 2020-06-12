@@ -18,24 +18,24 @@ epidemiology, pandemic.
 Before extracting the tweet ids from TweetSets, we applied the following filter query so that only tweets whose text
 contains either of these terms were selected:
 
-nudge theory, david halpern, susan michie, richard amlot, thaler, sunstein, kahneman, behavioural science, behaviour change, behavior change, behavioral science, behavioural scientist, behavioral scientist, behavioural insight, behavioral insight, libertarian paternalism, choice architecture, choice architect, behavioural analysis, behavioral analysis, behavioral analyst, behavioural insights team, nudge unit, behavioural economics, behavioral economics, behavioural economist, behavioural policy, behavioral policy, irrational behaviour, irrational behavior, behavioural fatigue, behavioral fatigue, herd immunity behavioural science, herd immunity behavioral science, herd immunity nudge, herd immunity nudging, herd immunity nudge unit, herd immunity nudge theory, herd immunity behavioural, herd immunity behavioral, nudgetheory, davidhalpern, susanmichie, richardamlot, thaler, sunstein, kahneman, behaviouralscience, behaviourchange, behaviorchange, behavioralscience, behaviouralscientist, behavioralscientist, behaviouralinsight, behavioralinsight, libertarianpaternalism, choicearchitecture, choicearchitect, behaviouralanalysis, behavioralanalysis, behavioralanalyst, behaviouralinsightsteam, nudgeunit, behaviouraleconomics, behavioraleconomics, behaviouraleconomist, behaviouralpolicy, behavioralpolicy, irrationalbehaviour, irrationalbehavior, behaviouralfatigue, behavioralfatigue, herdimmunity behaviouralscience, herdimmunity behavioralscience
+nudge theory, david halpern, nick chater, susan michie, richard thaler, cass sunstein, dan kahneman, daniel kahneman, behavioural science, behaviour change, behavior change, behavioral science, behavioural scientist, behavioral scientist, behavioural insight, behavioral insight, libertarian paternalism, choice architecture, choice architect, behavioural analysis, behavioral analysis, behavioral analyst, behavioural insights team, nudge unit, behavioural economics, behavioral economics, behavioural economist, behavioural policy, behavioral policy, behavioural fatigue, behavioral fatigue, herd immunity behaviour, herd immunity behavior, herd immunity behavioural science, herd immunity behavioral science, herd immunity nudg, herd immunity nudge, herd immunity nudging, herd immunity nudge unit, herd immunity nudge theory, herd immunity behavioural, herd immunity behavioral, nudge strategy, nanny state behavior, nanny state behaviour, nanny state nudg, nudgetheory, davidhalpern, nickchater, susanmichie, richardthaler, casssunstein, dankahneman, danielkahneman, behaviouralscience, behaviourchange, behaviorchange, behavioralscience, behaviouralscientist, behavioralscientist, behaviouralinsight, behavioralinsight, libertarianpaternalism, choicearchitecture, choicearchitect, behaviouralanalysis, behavioralanalysis, behavioralanalyst, behaviouralinsightsteam, nudgeunit, behaviouraleconomics, behavioraleconomics, behaviouraleconomist, behaviouralpolicy, behavioralpolicy, behaviouralfatigue, behavioralfatigue, herdimmunity behaviouralscience, herdimmunity behavioralscience, nudgestrategy, nannystate behavior, nannystate behaviour, nannystate nudg
 
-This resulted in a dataset of 16,568 tweets, corresponding to 0.009% of the initial dataset.
+This resulted in a dataset of 16,568 tweets, corresponding to around 0.008% of the initial dataset.
 
 
 ## Dataset key figures
  
-Tweet counts: 	16,568 
+Tweet counts: 	15,707 
 First tweet: 	03-03-2020 
 Last tweet: 	01-05-2020
 
 Breakdown by type of tweets: 
 
-- original tweets: 	2,377 (14%) 
-- retweets: 		10,673 (64%) 
-- quotes:			3,173 (19%) 
-- replies: 			345 (2%)
+- original tweets: 	2,333 (15%) 
+- retweets: 		10,025 (64%) 
+- quotes:			3,011 (19%) 
+- replies: 			338 (2%)
 
 
 Link to the filtered dataset:
-[http://tweetsets.library.gwu.edu/dataset/573ef31e](http://tweetsets.library.gwu.edu/dataset/573ef31e)
+[http://tweetsets.library.gwu.edu/dataset/9cc72776](http://tweetsets.library.gwu.edu/dataset/9cc72776)
