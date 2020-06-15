@@ -112,7 +112,7 @@ def main():
                 id_batch = ids[start:end]
                 start += 100
                 end += 100
-                tweets = api.statuses_lookup(id_batch)
+                tweets = api.statuses_lookup(id_batch, tweet_mode='extended')
                 for tweet in tweets:
                     json.dump(tweet._json, outfile)
                     outfile.write('\n')
@@ -138,15 +138,18 @@ def main():
         with open(output_file) as json_data:
             for tweet in json_data:
                 data = json.loads(tweet)
+                print(data.keys())  #
                 t = {
                     "created_at": data["created_at"],
-                    "text": data["text"],
+                    "text":
+                    data["text"],  # TODO: could be "text" or "full_text"
                     "in_reply_to_screen_name": data["in_reply_to_screen_name"],
                     "retweet_count": data["retweet_count"],
                     "favorite_count": data["favorite_count"],
                     "source": get_source(data),
                     "id_str": data["id_str"],
-                    "is_retweet": is_retweet(data)
+                    "is_retweet": is_retweet(data),
+                    "lang": data["lang"]
                 }
                 json.dump(t, outfile)
                 outfile.write('\n')
@@ -155,7 +158,7 @@ def main():
     print('creating CSV version of minimized json master file')
     fields = [
         "favorite_count", "source", "text", "in_reply_to_screen_name",
-        "is_retweet", "created_at", "retweet_count", "id_str"
+        "is_retweet", "created_at", "retweet_count", "lang", "id_str"
     ]
     f.writerow(fields)
     with open(output_file_short) as master_file:
@@ -165,7 +168,7 @@ def main():
                 data["favorite_count"], data["source"],
                 data["text"].encode('utf-8'), data["in_reply_to_screen_name"],
                 data["is_retweet"], data["created_at"], data["retweet_count"],
-                data["id_str"].encode('utf-8')
+                data["lang"], data["id_str"].encode('utf-8')
             ])
 
 
