@@ -1,0 +1,50 @@
+NewsFileUK:
+    FileName: UK_newspapers.xlsx
+    SheetName: News
+    SaveAs: uk_news.csv
+Fields:
+    - Title (1-100)
+    - Published date
+    - Publication location
+    - Publication
+    - Publication type
+    - Length
+    - Section
+    - Word count
+    - Countries
+    - Byline
+    - Agg-copyright
+    - Cite
+    - Company
+    - Headline
+    - Hlead
+    - Publication 2
+    - Publication type 2
+    - Pub-copyright
+    - Show
+    - Term
+    - Ticker
+FieldsToKeep:
+    - Title (1-100)
+    - Published date
+    - Publication location
+    - Publication
+    - Length
+    - Word count
+    - Countries
+    - Byline
+    - Headline
+    - Hlead
+    - Publication type 2
+FieldsNewNames:
+    - title
+    - pub_date
+    - pub_location
+    - pub_name
+    - length
+    - word_count
+    - countries
+    - byline
+    - headline
+    - full_text
+    - pub_type
