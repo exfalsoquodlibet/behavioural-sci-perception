@@ -17,6 +17,7 @@ docs/ext/secrets/api_keys.json
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+*/__pycache__
 
 # qualitative reserch docs
 qual/
