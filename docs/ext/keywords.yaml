@@ -1,15 +1,17 @@
-Unigrams:
-  - amlot
+NgramRange: 3
+Actors:
   - thaler
   - sunstein
   - kahneman
-  - helpern
+  - halpern
   - michie
   - chater
-Bigrams:
-  - nudge theory
+  - spi-b
   - nudge unit
+  - behavioural insights team
+BehavSci:
   - behavioural science
+  - behavioural sciences
   - behavioural scientist
   - behavioural scientists
   - behavioural insight
@@ -22,12 +24,39 @@ Bigrams:
   - behavioural analysis
   - behavioural analyst
   - behavioural analysts
-  - behavioural nudge
-  - behavioural nudges
-  - behavioural insights team
-  - libertarian paternalism
+  - psychologists
+  - psychologist
+  - psychology
   - choice architecture
   - choice architect
+Nudge:
+  - nudges
+  - nudge
+  - nudging
+  - nudge theory
   - irrational behaviour
+Positive:
+  - magic
+Negative:
+  - surveillance
+  - paternalism
+  - nanny state
+  - voodoo science
+  - police state
+Covid:
+  - pandemic
+  - epidemic
+  - corona
+  - coronavirus
+  - covid
+  - covid-19
+  - covid19
+  - health emergency
+Fatigue:
   - behavioural fatigue
-  - herd immunity 
+Immunity:
+  - herd immunity
+  
+  
+
+  
