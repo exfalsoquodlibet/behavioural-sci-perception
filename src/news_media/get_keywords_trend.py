@@ -12,9 +12,14 @@
 import re
 import os
 import pandas as pd
+
 from typing import List, Union
 from datetime import datetime
+
 from sklearn.feature_extraction.text import CountVectorizer
+from nltk.util import ngrams
+
+from math import log10
 
 from src.utils import load_config_yaml
 from src.preproc_text import tokenise_sent
@@ -35,6 +40,13 @@ print(type(CONFIG))
 VOCAB = CONFIG['Actors'] + CONFIG['BehavSci'] + CONFIG['Nudge'] + CONFIG[
     'Positive'] + CONFIG['Negative'] + CONFIG['Covid'] + CONFIG[
         'Fatigue'] + CONFIG['Immunity']
+
+UNIGRAM_VOCAB = [kword for kword in VOCAB if ' ' not in kword]
+BIGRAM_VOCAB = [
+    kword for kword in VOCAB
+    if (' ' in kword) and (kword != "behavioural insights team")
+]
+TRIGRAM_VOCAB = ["behavioural insights team"]
 
 
 class NewsArticles:
@@ -92,6 +104,57 @@ class NewsArticles:
             'behavioural insights team']
         df['nudge'] = df['nudge'] - df['nudge unit'] - df['nudge theory']
         return df
+
+    def normalise_tf_log(self):
+        """
+        Returns normalised frequency from raw frequency of keyword.
+        """
+        self.normed_log_tf = self.keywords_count.applymap(
+            NewsArticles._normalise_tf_log)
+
+    @staticmethod
+    def _normalise_tf_log(raw_count):
+        """
+        Calculated log frequency as normalised frequency.
+        Ref: https://nlp.stanford.edu/IR-book/html/htmledition/sublinear-tf-scaling-1.html
+        """
+        norm_freq = 1 + log10(raw_count) if raw_count > 0 else 0
+        return norm_freq
+
+    def normalise_tf_len(self):
+        """
+        Returns normalised frequency of keywords separately for unigram, bigram and trigram keywords, as follows.
+        For each document and each keyword (depending on what ngram it is):
+            - raw freq of unigram keyword in doc / total count of unigrams in doc
+            - raw freq of bigram keyword in doc / total count of bigrams in doc
+            - raw freq of trigram keyword in doc / total count of trigrams in doc.
+        """
+
+        unigram_normtf = self.keywords_count[UNIGRAM_VOCAB].div([
+            NewsArticles.get_num_ngrams(text, 1)
+            for text in self.data.full_text
+        ],
+                                                                axis=0)
+        bigram_normtf = self.keywords_count[BIGRAM_VOCAB].div([
+            NewsArticles.get_num_ngrams(text, 2)
+            for text in self.data.full_text
+        ],
+                                                              axis=0)
+        trigram_normtf = self.keywords_count[TRIGRAM_VOCAB].div([
+            NewsArticles.get_num_ngrams(text, 3)
+            for text in self.data.full_text
+        ],
+                                                                axis=0)
+
+        self.normed_len_tf = pd.concat(
+            [unigram_normtf, bigram_normtf, trigram_normtf], axis=1)
+
+    @staticmethod
+    def get_num_ngrams(text, ngram):
+        """
+        Counts number of n-grams in a text.
+        """
+        return len(list(ngrams(text.split(), ngram)))
 
     def extract_date(self):
         """
