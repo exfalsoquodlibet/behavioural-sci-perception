@@ -107,7 +107,7 @@ class NewsArticles:
 
     def normalise_tf_log(self):
         """
-        Returns normalised frequency from raw frequency of keyword.
+        Returns log-normalised frequency from raw frequency of keyword.
         """
         self.normed_log_tf = self.keywords_count.applymap(
             NewsArticles._normalise_tf_log)
@@ -123,31 +123,26 @@ class NewsArticles:
 
     def normalise_tf_len(self):
         """
-        Returns normalised frequency of keywords separately for unigram, bigram and trigram keywords, as follows.
-        For each document and each keyword (depending on what ngram it is):
-            - raw freq of unigram keyword in doc / total count of unigrams in doc
-            - raw freq of bigram keyword in doc / total count of bigrams in doc
-            - raw freq of trigram keyword in doc / total count of trigrams in doc.
+        Returns normalised frequency of keywords by dividing a keyword's raw frequency by the lenght
+        of the document in which it occurs.
+        The length of the document is calculated as number of unigrams even if the keyword is a bigram
+        or a trigram, as we consider keywords as their own words even if they are composed of two or three ngrams.
         """
 
-        unigram_normtf = self.keywords_count[UNIGRAM_VOCAB].div([
+        normtf = self.keywords_count.div([
             NewsArticles.get_num_ngrams(text, 1)
             for text in self.data.full_text
         ],
-                                                                axis=0)
-        bigram_normtf = self.keywords_count[BIGRAM_VOCAB].div([
-            NewsArticles.get_num_ngrams(text, 2)
-            for text in self.data.full_text
-        ],
-                                                              axis=0)
-        trigram_normtf = self.keywords_count[TRIGRAM_VOCAB].div([
-            NewsArticles.get_num_ngrams(text, 3)
-            for text in self.data.full_text
-        ],
-                                                                axis=0)
+                                         axis=0)
 
-        self.normed_len_tf = pd.concat(
-            [unigram_normtf, bigram_normtf, trigram_normtf], axis=1)
+        self.normed_len_tf = normtf
+
+    def get_tf_by_theme(self):
+        """
+        Sums the term-frequency of each term (keyword) belonging to the same over-arching theme.
+        Returns a theme-document-frequency
+        """
+        pass
 
     @staticmethod
     def get_num_ngrams(text, ngram):
@@ -172,10 +167,40 @@ class NewsArticles:
         self.data['date'] = list_dates
         self.date = list_dates
 
+    def df_per_day(self):
+        """
+        Calculates document frequency (`df`) for each keyword-date pair.
+        That is, `df` is not calculated with respect to the whole collection of documents, but
+        to the collection of documents on a given date. This will allows us to compare `df` trends over time.
+        """
+
+        pass
+
     def get_keywords_timetrend(self):
         self.keywords_count['date'] = self.date
         self.keywords_count.groupby('date').apply(
             lambda x: (x > 0).sum()).reset_index(name='count')
+
+
+def expand_dict(d):
+    """
+        Explodes the original configuration-file dictionary where themes are keys and the
+        correspoding keywords are their list values in list format,
+        so that each keyword is a key and the corresponding theme is its value.
+
+        Example:
+        {'theme1': ['k1', 'k2', 'k3]} => {'k1':'theme1', 'k2':'theme2', 'k3':'theme3'}
+
+        Args:
+            d:  the original configuration-file dictionary
+
+        Returns:
+            The exploded dictionary.
+        """
+    keys = [
+        k for k, v in d.items() if isinstance(v, list) and k != 'NgramRange'
+    ]
+    return {v: k for k in keys for v in d[k]}
 
 
 def collect_kword_opinioncontext(
