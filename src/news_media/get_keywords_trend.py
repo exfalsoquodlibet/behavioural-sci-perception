@@ -48,6 +48,8 @@ BIGRAM_VOCAB = [
 ]
 TRIGRAM_VOCAB = ["behavioural insights team"]
 
+COLS_GROUPBY_DICT = expand_dict(CONFIG)
+
 
 class NewsArticles:
     """
@@ -137,12 +139,31 @@ class NewsArticles:
 
         self.normed_len_tf = normtf
 
-    def get_tf_by_theme(self):
+    def get_theme_freqs(self, freq_type):
         """
-        Sums the term-frequency of each term (keyword) belonging to the same over-arching theme.
-        Returns a theme-document-frequency
+        Returns the frequencies of the over-arching themes, by summing the frequencies of the
+        correspoding keywords.
+
+        Theme frequenciesare calculated for the specified frequency (raw count, normalised-by-length,
+        normalised-by-log).
+
+        Args:
+            freq_type: one of 'raw' ('raw frequency'), 'log' (normalised log frequency), 'len' (document-length normalised fruequency)
         """
-        pass
+
+        try:
+            if freq_type == "raw":
+                self.themes_count = self.keywords_count.groupby(
+                    COLS_GROUPBY_DICT, axis=1).sum()
+            if freq_type == "len":
+                self.normed_len_tf_themes = self.normed_len_tf.groupby(
+                    COLS_GROUPBY_DICT, axis=1).sum()
+            if freq_type == "log":
+                self.normed_log_tf_themes = self.normed_log_tf.groupby(
+                    COLS_GROUPBY_DICT, axis=1).sum()
+        except KeyError:
+            print("'freq_type' must be either 'raw', 'log' or 'len'.")
+            raise KeyError
 
     @staticmethod
     def get_num_ngrams(text, ngram):
