@@ -41,6 +41,9 @@ VOCAB = CONFIG['Actors'] + CONFIG['BehavSci'] + CONFIG['Nudge'] + CONFIG[
     'Positive'] + CONFIG['Negative'] + CONFIG['Covid'] + CONFIG[
         'Fatigue'] + CONFIG['Immunity']
 
+# CONFIG.keys that do not contain keyword groups
+NON_KWORD_CONFIG = ["NgramRange"]
+
 UNIGRAM_VOCAB = [kword for kword in VOCAB if ' ' not in kword]
 BIGRAM_VOCAB = [
     kword for kword in VOCAB
@@ -69,7 +72,7 @@ class NewsArticles:
 
         self.data = df
         self.country = country
-        type(self).__COLS_GROUPBY_DICT = self.expand_dict(CONFIG)
+        self.__COLS_GROUPBY_DICT = self.expand_dict(CONFIG)
 
     def count_keywords(self):
         """"""
@@ -150,24 +153,31 @@ class NewsArticles:
         normalised-by-log).
 
         Args:
-            freq_type: one of 'raw' ('raw frequency'), 'log' (normalised log frequency), 'len' (document-length normalised fruequency).
+            freq_type: one of 'r' ('raw frequency'), 'l' (normalised log frequency), 'n' (document-length normalised fruequency),
+            'rln' (all the three)
         Returns:
             Theme-averaged frequency (as sum of the frequencies of the terms).
         """
+        allowed_freq_type = ['r', 'n', 'l', 'rln']
+        if freq_type not in allowed_freq_type:
+            raise ValueError(
+                "'freq_type' must be one of 'r', 'l', 'n' or 'rln'.")
 
-        try:
-            if freq_type == "raw":
-                self.themes_count = self.keywords_count.groupby(
-                    type(self).COLS_GROUPBY_DICT, axis=1).sum()
-            if freq_type == "len":
-                self.normed_len_tf_themes = self.normed_len_tf.groupby(
-                    type(self).COLS_GROUPBY_DICT, axis=1).sum()
-            if freq_type == "log":
-                self.normed_log_tf_themes = self.normed_log_tf.groupby(
-                    type(self).COLS_GROUPBY_DICT, axis=1).sum()
-        except KeyError:
-            print("'freq_type' must be either 'raw', 'log' or 'len'.")
-            raise KeyError
+        key_metrics_map = {
+            'r': ['keywords_count', 'themes_count'],
+            'n': ['normed_len_tf', 'normed_len_tf_themes'],
+            'l': ['normed_log_tf', 'normed_log_tf_themes']
+        }
+
+        [
+            setattr(
+                self,
+                key_metrics_map.get(char)[1],
+                getattr(self,
+                        key_metrics_map.get(char)[0]).groupby(
+                            self.__COLS_GROUPBY_DICT, axis=1).sum())
+            for char in freq_type
+        ]
 
     def get_kw_doc_freq(self):
         """
@@ -195,7 +205,7 @@ class NewsArticles:
         """
 
         # raw count
-        kwc_theme = self.keywords_countgroupby(type(self).COLS_GROUPBY_DICT,
+        kwc_theme = self.keywords_countgroupby(self.COLS_GROUPBY_DICT,
                                                axis=1).sum()
 
         # binary (yes/no)
@@ -247,7 +257,7 @@ class NewsArticles:
 
         keys = [
             k for k, v in d.items()
-            if isinstance(v, list) and k != 'NgramRange'
+            if (isinstance(v, list)) and (k not in NON_KWORD_CONFIG)
         ]
         return {v: k for k in keys for v in d[k]}
 
