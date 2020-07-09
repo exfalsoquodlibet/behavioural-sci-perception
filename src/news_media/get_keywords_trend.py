@@ -48,12 +48,13 @@ BIGRAM_VOCAB = [
 ]
 TRIGRAM_VOCAB = ["behavioural insights team"]
 
-COLS_GROUPBY_DICT = expand_dict(CONFIG)
-
 
 class NewsArticles:
     """
     """
+
+    __COLS_GROUPBY_DICT = {}
+
     def __init__(self, country: str = "uk"):
 
         if country == "usa":
@@ -68,6 +69,7 @@ class NewsArticles:
 
         self.data = df
         self.country = country
+        type(self).__COLS_GROUPBY_DICT = self.expand_dict(CONFIG)
 
     def count_keywords(self):
         """"""
@@ -139,31 +141,69 @@ class NewsArticles:
 
         self.normed_len_tf = normtf
 
-    def get_theme_freqs(self, freq_type):
+    def get_themes_freqs(self, freq_type):
         """
-        Returns the frequencies of the over-arching themes, by summing the frequencies of the
-        correspoding keywords.
+        Returns the theme-average frequencies (i.e., frequencies of the over-arching themes,
+        by summing the frequencies of the correspoding keywords.
 
-        Theme frequenciesare calculated for the specified frequency (raw count, normalised-by-length,
+        This is calculated for the specified frequency (raw count, normalised-by-length,
         normalised-by-log).
 
         Args:
-            freq_type: one of 'raw' ('raw frequency'), 'log' (normalised log frequency), 'len' (document-length normalised fruequency)
+            freq_type: one of 'raw' ('raw frequency'), 'log' (normalised log frequency), 'len' (document-length normalised fruequency).
+        Returns:
+            Theme-averaged frequency (as sum of the frequencies of the terms).
         """
 
         try:
             if freq_type == "raw":
                 self.themes_count = self.keywords_count.groupby(
-                    COLS_GROUPBY_DICT, axis=1).sum()
+                    type(self).COLS_GROUPBY_DICT, axis=1).sum()
             if freq_type == "len":
                 self.normed_len_tf_themes = self.normed_len_tf.groupby(
-                    COLS_GROUPBY_DICT, axis=1).sum()
+                    type(self).COLS_GROUPBY_DICT, axis=1).sum()
             if freq_type == "log":
                 self.normed_log_tf_themes = self.normed_log_tf.groupby(
-                    COLS_GROUPBY_DICT, axis=1).sum()
+                    type(self).COLS_GROUPBY_DICT, axis=1).sum()
         except KeyError:
             print("'freq_type' must be either 'raw', 'log' or 'len'.")
             raise KeyError
+
+    def get_kw_doc_freq(self):
+        """
+        Calculates document-frequency (df) for each keyword and date. For each keyword, k:
+        df_k = [{d in D | k in d}] / |D|
+        that is, for each date, the number of documenet that contains k divided by the total number of documents.
+
+        That is, `df` is not calculated with respect to the whole collection of documents, but
+        to the collection of documents on a given date. This will allows us to compare `df` trends over time.
+        """
+
+        # whether a keyword appear in that articles yes  or no
+        kwc_indi = self.keywords_count.applymap(lambda cell: 1
+                                                if cell > 0 else 0)
+        kwc_indi['article_date'] = self.date
+        # relative documnet frequency (per date)
+        kwc_indi_reldf = kwc_indi.groupby(
+            'article_date').sum() / kwc_indi.groupby('article_date').count()
+        self.kword_docfreq = kwc_indi_reldf
+
+    def get_theme_doc_freq(self):
+        """
+        Calculates document-frequency for the over-arching themes.
+        A theme occurrence is defined regardless of which specific keyword(s) occur and how many occurrences.
+        """
+
+        # raw count
+        kwc_theme = self.keywords_countgroupby(type(self).COLS_GROUPBY_DICT,
+                                               axis=1).sum()
+
+        # binary (yes/no)
+        kwc_theme_bin = kwc_theme.applymap(lambda cell: 1 if cell > 0 else 0)
+        kwc_theme_bin['article_date'] = uk_news.date
+        kwc_theme_reldf = kwc_theme_bin.groupby('article_date').sum(
+        ) / kwc_theme_bin.groupby('article_date').count()
+        self.theme_docfreq = kwc_theme_reldf
 
     @staticmethod
     def get_num_ngrams(text, ngram):
@@ -188,23 +228,9 @@ class NewsArticles:
         self.data['date'] = list_dates
         self.date = list_dates
 
-    def df_per_day(self):
+    @staticmethod
+    def expand_dict(d):
         """
-        Calculates document frequency (`df`) for each keyword-date pair.
-        That is, `df` is not calculated with respect to the whole collection of documents, but
-        to the collection of documents on a given date. This will allows us to compare `df` trends over time.
-        """
-
-        pass
-
-    def get_keywords_timetrend(self):
-        self.keywords_count['date'] = self.date
-        self.keywords_count.groupby('date').apply(
-            lambda x: (x > 0).sum()).reset_index(name='count')
-
-
-def expand_dict(d):
-    """
         Explodes the original configuration-file dictionary where themes are keys and the
         correspoding keywords are their list values in list format,
         so that each keyword is a key and the corresponding theme is its value.
@@ -218,10 +244,17 @@ def expand_dict(d):
         Returns:
             The exploded dictionary.
         """
-    keys = [
-        k for k, v in d.items() if isinstance(v, list) and k != 'NgramRange'
-    ]
-    return {v: k for k in keys for v in d[k]}
+
+        keys = [
+            k for k, v in d.items()
+            if isinstance(v, list) and k != 'NgramRange'
+        ]
+        return {v: k for k in keys for v in d[k]}
+
+    def get_keywords_timetrend(self):
+        self.keywords_count['date'] = self.date
+        self.keywords_count.groupby('date').apply(
+            lambda x: (x > 0).sum()).reset_index(name='count')
 
 
 def collect_kword_opinioncontext(
