@@ -66,9 +66,9 @@ class NewsArticles:
         self.data = df
         self.country = country
         self.__COLS_GROUPBY_DICT = self.expand_dict(CONFIG)
-        self.dates = None
+        self.dates = NewsArticles._extract_date(news_df=df)
         # private class-instance attributes
-        self._kword_raw_tf = None
+        self._kword_raw_tf = NewsArticles._compute_kword_raw_tf(news_df=df)
         self._kword_yn_occurrence = None
         self._kword_normlen_tf = None
         self._kword_normlog_tf = None
@@ -78,30 +78,36 @@ class NewsArticles:
         self._theme_normlog_f = None
         self._theme_docfreq = None
 
-    @property
-    def kword_raw_tf(self):
-        """"""
-        if self._kword_raw_tf is None:
-            vec = CountVectorizer(vocabulary=VOCAB,
-                                  stop_words=None,
-                                  ngram_range=(1, CONFIG['NgramRange']))
-            results_mat = vec.fit_transform(self.data.full_text)
+    @staticmethod
+    def _compute_kword_raw_tf(news_df):
+        """
+        Computes the document-term frequency matrix for the keywords in the VOCAB.
 
-            # sparse to dense matrix
-            results_mat = results_mat.toarray()
+        Args:
+            news_df: pandas.Dataframe, results of `get_news_articles.IngestNews`.
 
-            # get the feature names from the already-fitted vectorizer
-            vec_feature_names = vec.get_feature_names()
+        Returns:
+            The document-term frequency matrix for the keywords.
+        """
+        vec = CountVectorizer(vocabulary=VOCAB,
+                              stop_words=None,
+                              ngram_range=(1, CONFIG['NgramRange']))
+        results_mat = vec.fit_transform(news_df.full_text)
 
-            # test that vec's feature names == vocab
-            assert vec_feature_names == VOCAB
+        # sparse to dense matrix
+        results_mat = results_mat.toarray()
 
-            # make a table with word frequencies as values and vocab as columns
-            out_df = pd.DataFrame(data=results_mat, columns=vec_feature_names)
-            out_df = NewsArticles._remove_duplicate_counts(out_df)
+        # get the feature names from the already-fitted vectorizer
+        vec_feature_names = vec.get_feature_names()
 
-            self._kword_raw_tf = out_df
-        return self._kword_raw_tf
+        # test that vec's feature names == vocab
+        assert vec_feature_names == VOCAB
+
+        # make a table with word frequencies as values and vocab as columns
+        out_df = pd.DataFrame(data=results_mat, columns=vec_feature_names)
+        out_df = NewsArticles._remove_duplicate_counts(out_df)
+
+        return out_df
 
     @staticmethod
     def _remove_duplicate_counts(df: pd.DataFrame) -> pd.DataFrame:
@@ -118,6 +124,10 @@ class NewsArticles:
             'behavioural insights team']
         df['nudge'] = df['nudge'] - df['nudge unit'] - df['nudge theory']
         return df
+
+    @property
+    def kword_raw_tf(self):
+        return self._kword_raw_tf
 
     @property
     def kword_yn_occurrence(self):
@@ -225,9 +235,9 @@ class NewsArticles:
         That is, `df` is not calculated with respect to the whole collection of documents, but
         to the collection of documents on a given date. This will allows us to compare `df` trends over time.
         """
-        if self.date is None:
+        if self.dates is None:
             raise AttributeError(
-                "`self.date` attribute must be defined to compute `kword_doc_freq`!"
+                "`self.dates` attribute must be defined to compute `kword_doc_freq`!"
             )
         if self._kword_raw_tf is None:
             raise AttributeError("`kword_raw_tf` must be calculated first!")
@@ -236,7 +246,7 @@ class NewsArticles:
             # whether a keyword appear in an article yes or no (regardless of how many times)
             kwc_bin = self._kword_raw_tf.applymap(lambda cell: 1
                                                   if cell > 0 else 0)
-            kwc_bin['article_date'] = self.date
+            kwc_bin['article_date'] = self.dates
             # relative document frequency (per date)
             self._kword_docfreq = kwc_bin.groupby('article_date').sum(
             ) / kwc_bin.groupby('article_date').count()
@@ -248,9 +258,9 @@ class NewsArticles:
         Calculates document-frequency for the over-arching themes.
         A theme occurrence is defined regardless of which specific keyword(s) occur and how many occurrences.
         """
-        if self.date is None:
+        if self.dates is None:
             raise AttributeError(
-                "`self.date` attribute must be defined to compute `kword_doc_freq`!"
+                "`self.dates` attribute must be defined to compute `kword_doc_freq`!"
             )
 
         if self._kword_raw_tf is None:
@@ -262,10 +272,10 @@ class NewsArticles:
 
         # binary frequency (yes/no)
         kwc_theme_bin = kwc_theme.applymap(lambda cell: 1 if cell > 0 else 0)
-        kwc_theme_bin['article_date'] = self.date
-        self.__theme_docfreq = kwc_theme_bin.groupby('article_date').sum(
+        kwc_theme_bin['article_date'] = self.dates
+        self._theme_docfreq = kwc_theme_bin.groupby('article_date').sum(
         ) / kwc_theme_bin.groupby('article_date').count()
-        return self.__theme_docfreq
+        return self._theme_docfreq
 
     @staticmethod
     def get_num_ngrams(text, ngram):
@@ -274,8 +284,16 @@ class NewsArticles:
         """
         return len(list(ngrams(text.split(), ngram)))
 
-    def extract_date(self):
+    @staticmethod
+    def _extract_date(news_df):
         """
+        Extract the dates from the dataset and encode them in date format.
+
+        Args:
+            news_df: pandas.Dataframe, results of `get_news_articles.IngestNews`.
+
+        Returns:
+            List of dates.
         """
         date_formats = {3: r"%B %d, %Y", 4: r"%B %d, %Y %A"}
 
@@ -284,11 +302,10 @@ class NewsArticles:
 
         list_dates = [
             datetime.strptime(date, _get_date_format(date))
-            for date in self.data.pub_date
+            for date in news_df.pub_date
         ]
 
-        self.data['date'] = list_dates
-        self.date = list_dates
+        return list_dates
 
     @staticmethod
     def expand_dict(d):
