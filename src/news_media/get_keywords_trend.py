@@ -66,28 +66,42 @@ class NewsArticles:
         self.data = df
         self.country = country
         self.__COLS_GROUPBY_DICT = self.expand_dict(CONFIG)
+        self.dates = None
+        # private class-instance attributes
+        self._kword_raw_tf = None
+        self._kword_yn_occurrence = None
+        self._kword_normlen_tf = None
+        self._kword_normlog_tf = None
+        self._kword_docfreq = None
+        self._theme_rawfreq = None
+        self._theme_normlen_f = None
+        self._theme_normlog_f = None
+        self._theme_docfreq = None
 
-    def count_keywords(self):
+    @property
+    def kword_raw_tf(self):
         """"""
-        vec = CountVectorizer(vocabulary=VOCAB,
-                              stop_words=None,
-                              ngram_range=(1, CONFIG['NgramRange']))
-        results_mat = vec.fit_transform(self.data.full_text)
+        if self._kword_raw_tf is None:
+            vec = CountVectorizer(vocabulary=VOCAB,
+                                  stop_words=None,
+                                  ngram_range=(1, CONFIG['NgramRange']))
+            results_mat = vec.fit_transform(self.data.full_text)
 
-        # sparse to dense matrix
-        results_mat = results_mat.toarray()
+            # sparse to dense matrix
+            results_mat = results_mat.toarray()
 
-        # get the feature names from the already-fitted vectorizer
-        vec_feature_names = vec.get_feature_names()
+            # get the feature names from the already-fitted vectorizer
+            vec_feature_names = vec.get_feature_names()
 
-        # test that vec's feature names == vocab
-        assert vec_feature_names == VOCAB
+            # test that vec's feature names == vocab
+            assert vec_feature_names == VOCAB
 
-        # make a table with word frequencies as values and vocab as columns
-        out_df = pd.DataFrame(data=results_mat, columns=vec_feature_names)
-        out_df = NewsArticles._remove_duplicate_counts(out_df)
+            # make a table with word frequencies as values and vocab as columns
+            out_df = pd.DataFrame(data=results_mat, columns=vec_feature_names)
+            out_df = NewsArticles._remove_duplicate_counts(out_df)
 
-        self.keywords_count = out_df
+            self._kword_raw_tf = out_df
+        return self._kword_raw_tf
 
     @staticmethod
     def _remove_duplicate_counts(df: pd.DataFrame) -> pd.DataFrame:
@@ -105,19 +119,33 @@ class NewsArticles:
         df['nudge'] = df['nudge'] - df['nudge unit'] - df['nudge theory']
         return df
 
-    def get_kword_yn_occurrence(self):
+    @property
+    def kword_yn_occurrence(self):
         """
         Returns whether a keyword occurs in an article (1) or not (0).
         """
-        self.kword_yn_occurrence = self.keywords_count.applymap(
-            lambda cell: 1 if cell > 0 else 0)
+        if self._kword_yn_occurrence is None:
+            try:
+                self._kword_yn_occurrence = self._kword_raw_tf.applymap(
+                    lambda cell: 1 if cell > 0 else 0)
+            except AttributeError:
+                raise AttributeError(
+                    "`kword_raw_tf` must be calculated first!")
+        return self._kword_yn_occurrence
 
-    def normalise_tf_log(self):
+    @property
+    def kword_normlog_tf(self):
         """
         Returns log-normalised frequency from raw frequency of keyword.
         """
-        self.normed_log_tf = self.keywords_count.applymap(
-            NewsArticles._normalise_tf_log)
+        if self._kword_normlog_tf is None:
+            try:
+                self._kword_normlog_tf = self._kword_raw_tf.applymap(
+                    NewsArticles._normalise_tf_log)
+            except AttributeError:
+                raise AttributeError(
+                    "`kword_raw_tf` must be calculated first!")
+        return self._kword_normlog_tf
 
     @staticmethod
     def _normalise_tf_log(raw_count):
@@ -128,58 +156,67 @@ class NewsArticles:
         norm_freq = 1 + log10(raw_count) if raw_count > 0 else 0
         return norm_freq
 
-    def normalise_tf_len(self):
+    @property
+    def kword_normlen_tf(self):
         """
         Returns normalised frequency of keywords by dividing a keyword's raw frequency by the lenght
         of the document in which it occurs.
         The length of the document is calculated as number of unigrams even if the keyword is a bigram
         or a trigram, as we consider keywords as their own words even if they are composed of two or three ngrams.
         """
+        if self._kword_normlen_tf is None:
+            try:
+                self._kword_normlen_tf = self._kword_raw_tf.div([
+                    NewsArticles.get_num_ngrams(text, 1)
+                    for text in self.data.full_text
+                ],
+                                                                axis=0)
+            except AttributeError:
+                raise AttributeError(
+                    "`kword_raw_tf` must be calculated first!")
+        return self._kword_normlen_tf
 
-        normtf = self.keywords_count.div([
-            NewsArticles.get_num_ngrams(text, 1)
-            for text in self.data.full_text
-        ],
-                                         axis=0)
-
-        self.normed_len_tf = normtf
-
-    def get_themes_freqs(self, freq_type):
+    @property
+    def theme_rawfreq(self):
         """
-        Returns the theme-average frequencies (i.e., frequencies of the over-arching themes,
-        by summing the frequencies of the correspoding keywords.
-
-        This is calculated for the specified frequency (raw count, normalised-by-length,
-        normalised-by-log).
-
-        Args:
-            freq_type: one of 'r' ('raw frequency'), 'l' (normalised log frequency), 'n' (document-length normalised fruequency),
-            'rln' (all the three)
-        Returns:
-            Theme-averaged frequency (as sum of the frequencies of the terms).
+        Returns the theme raw frequencies (i.e., frequencies of the over-arching themes)
+        by summing the raw frequencies of the correspoding keywords.
         """
-        allowed_freq_type = ['r', 'n', 'l', 'rln']
-        if freq_type not in allowed_freq_type:
-            raise ValueError(
-                "'freq_type' must be one of 'r', 'l', 'n' or 'rln'.")
+        try:
+            self._theme_rawfreq = self._kword_raw_tf.groupby(
+                self.__COLS_GROUPBY_DICT, axis=1).sum()
+        except AttributeError:
+            raise AttributeError("`kword_raw_tf` must be computed first!")
+        return self._theme_rawfreq
 
-        key_metrics_map = {
-            'r': ['keywords_count', 'themes_count'],
-            'n': ['normed_len_tf', 'normed_len_tf_themes'],
-            'l': ['normed_log_tf', 'normed_log_tf_themes']
-        }
+    @property
+    def theme_normlen_f(self):
+        """
+        Returns the theme len-normalised frequencies (i.e., len-normed frequencies of the over-arching themes)
+        by summing the len-normed frequencies of the correspoding keywords.
+        """
+        try:
+            self._theme_normlen_f = self._kword_normlen_tf.groupby(
+                self.__COLS_GROUPBY_DICT, axis=1).sum()
+        except AttributeError:
+            raise AttributeError("`kword_normlen_tf` must be computed first!")
+        return self._theme_normlen_f
 
-        [
-            setattr(
-                self,
-                key_metrics_map.get(char)[1],
-                getattr(self,
-                        key_metrics_map.get(char)[0]).groupby(
-                            self.__COLS_GROUPBY_DICT, axis=1).sum())
-            for char in freq_type
-        ]
+    @property
+    def theme_normlog_f(self):
+        """
+        Returns the theme log-normalised frequencies (i.e., log-normed frequencies of the over-arching themes)
+        by summing the log-normed frequencies of the correspoding keywords.
+        """
+        try:
+            self._theme_normlog_f = self._kword_normlog_tf.groupby(
+                self.__COLS_GROUPBY_DICT, axis=1).sum()
+        except AttributeError:
+            raise AttributeError("`kword_normlog_tf` must be computed first!")
+        return self._theme_normlog_f
 
-    def get_kw_doc_freq(self):
+    @property
+    def kword_docfreq(self):
         """
         Calculates document-frequency (df) for each keyword and date. For each keyword, k:
         df_k = [{d in D | k in d}] / |D|
@@ -188,32 +225,47 @@ class NewsArticles:
         That is, `df` is not calculated with respect to the whole collection of documents, but
         to the collection of documents on a given date. This will allows us to compare `df` trends over time.
         """
+        if self.date is None:
+            raise AttributeError(
+                "`self.date` attribute must be defined to compute `kword_doc_freq`!"
+            )
+        if self._kword_raw_tf is None:
+            raise AttributeError("`kword_raw_tf` must be calculated first!")
 
-        # whether a keyword appear in an article yes  or no (regardless of how many times)
-        kwc_indi = self.keywords_count.applymap(lambda cell: 1
-                                                if cell > 0 else 0)
-        kwc_indi['article_date'] = self.date
-        # relative documnet frequency (per date)
-        kwc_indi_reldf = kwc_indi.groupby(
-            'article_date').sum() / kwc_indi.groupby('article_date').count()
-        self.kword_docfreq = kwc_indi_reldf
+        if self._kword_docfreq is None:
+            # whether a keyword appear in an article yes or no (regardless of how many times)
+            kwc_bin = self._kword_raw_tf.applymap(lambda cell: 1
+                                                  if cell > 0 else 0)
+            kwc_bin['article_date'] = self.date
+            # relative document frequency (per date)
+            self._kword_docfreq = kwc_bin.groupby('article_date').sum(
+            ) / kwc_bin.groupby('article_date').count()
+        return self._kword_docfreq
 
-    def get_theme_doc_freq(self):
+    @property
+    def theme_docfreq(self):
         """
         Calculates document-frequency for the over-arching themes.
         A theme occurrence is defined regardless of which specific keyword(s) occur and how many occurrences.
         """
+        if self.date is None:
+            raise AttributeError(
+                "`self.date` attribute must be defined to compute `kword_doc_freq`!"
+            )
 
-        # raw count
-        kwc_theme = self.keywords_count.groupby(self.COLS_GROUPBY_DICT,
-                                                axis=1).sum()
+        if self._kword_raw_tf is None:
+            raise AttributeError("`kword_raw_tf` must be calculated first!")
 
-        # binary (yes/no)
+        # raw freq by theme
+        kwc_theme = self._kword_raw_tf.groupby(self.COLS_GROUPBY_DICT,
+                                               axis=1).sum()
+
+        # binary frequency (yes/no)
         kwc_theme_bin = kwc_theme.applymap(lambda cell: 1 if cell > 0 else 0)
-        kwc_theme_bin['article_date'] = uk_news.date
-        kwc_theme_reldf = kwc_theme_bin.groupby('article_date').sum(
+        kwc_theme_bin['article_date'] = self.date
+        self.__theme_docfreq = kwc_theme_bin.groupby('article_date').sum(
         ) / kwc_theme_bin.groupby('article_date').count()
-        self.theme_docfreq = kwc_theme_reldf
+        return self.__theme_docfreq
 
     @staticmethod
     def get_num_ngrams(text, ngram):
@@ -260,12 +312,6 @@ class NewsArticles:
             if (isinstance(v, list)) and (k not in NON_KWORD_CONFIG)
         ]
         return {v: k for k in keys for v in d[k]}
-
-    def get_kw_freq_bydate(self):
-
-        self.keywords_count['date'] = self.date
-        self.keywords_count.groupby('date').apply(
-            lambda x: (x > 0).sum()).reset_index(name='count')
 
 
 def collect_kword_opinioncontext(
