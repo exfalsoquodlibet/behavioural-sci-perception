@@ -44,13 +44,6 @@ VOCAB = CONFIG['Actors'] + CONFIG['BehavSci'] + CONFIG['Nudge'] + CONFIG[
 # CONFIG.keys that do not contain keyword groups
 NON_KWORD_CONFIG = ["NgramRange"]
 
-UNIGRAM_VOCAB = [kword for kword in VOCAB if ' ' not in kword]
-BIGRAM_VOCAB = [
-    kword for kword in VOCAB
-    if (' ' in kword) and (kword != "behavioural insights team")
-]
-TRIGRAM_VOCAB = ["behavioural insights team"]
-
 
 class NewsArticles:
     """
@@ -111,6 +104,13 @@ class NewsArticles:
             'behavioural insights team']
         df['nudge'] = df['nudge'] - df['nudge unit'] - df['nudge theory']
         return df
+
+    def get_kword_yn_occurrence(self):
+        """
+        Returns whether a keyword occurs in an article (1) or not (0).
+        """
+        self.kword_yn_occurrence = self.keywords_count.applymap(
+            lambda cell: 1 if cell > 0 else 0)
 
     def normalise_tf_log(self):
         """
@@ -189,7 +189,7 @@ class NewsArticles:
         to the collection of documents on a given date. This will allows us to compare `df` trends over time.
         """
 
-        # whether a keyword appear in that articles yes  or no
+        # whether a keyword appear in an article yes  or no (regardless of how many times)
         kwc_indi = self.keywords_count.applymap(lambda cell: 1
                                                 if cell > 0 else 0)
         kwc_indi['article_date'] = self.date
@@ -205,8 +205,8 @@ class NewsArticles:
         """
 
         # raw count
-        kwc_theme = self.keywords_countgroupby(self.COLS_GROUPBY_DICT,
-                                               axis=1).sum()
+        kwc_theme = self.keywords_count.groupby(self.COLS_GROUPBY_DICT,
+                                                axis=1).sum()
 
         # binary (yes/no)
         kwc_theme_bin = kwc_theme.applymap(lambda cell: 1 if cell > 0 else 0)
@@ -261,7 +261,8 @@ class NewsArticles:
         ]
         return {v: k for k in keys for v in d[k]}
 
-    def get_keywords_timetrend(self):
+    def get_kw_freq_bydate(self):
+
         self.keywords_count['date'] = self.date
         self.keywords_count.groupby('date').apply(
             lambda x: (x > 0).sum()).reset_index(name='count')
