@@ -108,6 +108,12 @@ class NewsArticles:
         out_df = NewsArticles._remove_duplicate_counts(out_df)
         out_df = NewsArticles._combined_plur_sing_kwords(out_df)
 
+        # append document id and pub date
+        # we use the property of CountVectorizer to keep the order of the original texts
+        out_df["pub_date"] = news_df["pub_date"]
+        out_df.set_index('pub_date', append=True, inplace=True)
+        out_df.rename_axis(["id", "pub_date"], inplace=True)
+
         return out_df
 
     @staticmethod
