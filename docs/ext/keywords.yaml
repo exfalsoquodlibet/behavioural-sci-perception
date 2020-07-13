@@ -56,6 +56,26 @@ Fatigue:
   - behavioural fatigue
 Immunity:
   - herd immunity
+SingularPlural:
+  behavioural science:
+    behavioural sciences
+  behavioural scientist:
+    behavioural scientists
+  behavioural insight:
+    behavioural insights
+  behavioural economist:
+    behavioural economists
+  behavioural analyst:
+    behavioural analysts
+  psychologist:
+    psychologists
+  nudge:
+    nudges
+  covid19:
+    - covid-19
+    - covid
+    - coronavirus
+    - corona
   
   
 
