@@ -42,7 +42,7 @@ VOCAB = CONFIG['Actors'] + CONFIG['BehavSci'] + CONFIG['Nudge'] + CONFIG[
         'Fatigue'] + CONFIG['Immunity']
 
 # CONFIG.keys that do not contain keyword groups
-NON_KWORD_CONFIG = ["NgramRange"]
+NON_KWORD_CONFIG = ["NgramRange", "SingularPlural"]
 
 
 class NewsArticles:
@@ -106,6 +106,7 @@ class NewsArticles:
         # make a table with word frequencies as values and vocab as columns
         out_df = pd.DataFrame(data=results_mat, columns=vec_feature_names)
         out_df = NewsArticles._remove_duplicate_counts(out_df)
+        out_df = NewsArticles._combined_plur_sing_kwords(out_df)
 
         return out_df
 
@@ -124,6 +125,29 @@ class NewsArticles:
             'behavioural insights team']
         df['nudge'] = df['nudge'] - df['nudge unit'] - df['nudge theory']
         return df
+
+    @staticmethod
+    def _combined_plur_sing_kwords(df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Combines the plural/singular forms of a keyword (e.g., "behavioural insight"/"behavioural insights")
+        and their raw term frequencies into one single keyword/frequency. The singular form is used.
+
+        Args:
+            df:     Dataframe whose columns contain keywords' raw term frequencies.
+
+        Returns:
+            The same dataset but with the term frequency of plural/singular forms of the same keyword combined.
+        """
+        data = df.copy()
+        for k, vs in CONFIG['SingularPlural'].items():
+            if isinstance(vs, str):
+                data[k] = data[k] + data[vs]
+                data = data.drop(columns=[vs])
+            elif isinstance(vs, list):
+                for v in vs:
+                    data[k] = data[k] + data[v]
+                    data = data.drop(columns=[v])
+        return data
 
     @property
     def kword_raw_tf(self):
@@ -147,6 +171,7 @@ class NewsArticles:
     def kword_normlog_tf(self):
         """
         Returns log-normalised frequency from raw frequency of keyword.
+        I.e., log-tf = 1 + log10(tf) if tf > 0, 0 otherwise.
         """
         if self._kword_normlog_tf is None:
             try:
@@ -158,7 +183,7 @@ class NewsArticles:
         return self._kword_normlog_tf
 
     @staticmethod
-    def _normalise_tf_log(raw_count):
+    def _normalise_tf_log(raw_count: int) -> float:
         """
         Calculated log frequency as normalised frequency.
         Ref: https://nlp.stanford.edu/IR-book/html/htmledition/sublinear-tf-scaling-1.html
@@ -267,7 +292,7 @@ class NewsArticles:
             raise AttributeError("`kword_raw_tf` must be calculated first!")
 
         # raw freq by theme
-        kwc_theme = self._kword_raw_tf.groupby(self.COLS_GROUPBY_DICT,
+        kwc_theme = self._kword_raw_tf.groupby(self.__COLS_GROUPBY_DICT,
                                                axis=1).sum()
 
         # binary frequency (yes/no)
@@ -278,14 +303,14 @@ class NewsArticles:
         return self._theme_docfreq
 
     @staticmethod
-    def get_num_ngrams(text, ngram):
+    def get_num_ngrams(text: str, ngram: int) -> int:
         """
         Counts number of n-grams in a text.
         """
         return len(list(ngrams(text.split(), ngram)))
 
     @staticmethod
-    def _extract_date(news_df):
+    def _extract_date(news_df: pd.DataFrame) -> List[datetime]:
         """
         Extract the dates from the dataset and encode them in date format.
 
@@ -308,7 +333,7 @@ class NewsArticles:
         return list_dates
 
     @staticmethod
-    def expand_dict(d):
+    def expand_dict(d: dict) -> dict:
         """
         Explodes the original configuration-file dictionary where themes are keys and the
         correspoding keywords are their list values in list format,
@@ -533,6 +558,8 @@ if __name__ == "__main__":
 
     uk_news = NewsArticles(country="uk")
     print(uk_news.data.shape)
+
+    # THIS IS NO LONGER NEEDED
 
     # 1. Count of all occurrences per article/date
     uk_news.count_keywords()
