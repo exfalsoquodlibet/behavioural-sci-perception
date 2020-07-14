@@ -66,7 +66,7 @@ class NewsArticles:
         self.data = df
         self.country = country
         self.__COLS_GROUPBY_DICT = self.expand_dict(CONFIG)
-        self.dates = NewsArticles._extract_date(news_df=df)
+        self.dates = NewsArticles._extract_date(dates_series=df.pub_date)
         # private class-instance attributes
         self._kword_raw_tf = NewsArticles._compute_kword_raw_tf(news_df=df)
         self._kword_yn_occurrence = None
@@ -79,7 +79,7 @@ class NewsArticles:
         self._theme_docfreq = None
 
     @staticmethod
-    def _compute_kword_raw_tf(news_df):
+    def _compute_kword_raw_tf(news_df: pd.DataFrame) -> pd.DataFrame:
         """
         Computes the document-term frequency matrix for the keywords in the VOCAB.
 
@@ -110,7 +110,8 @@ class NewsArticles:
 
         # append document id and pub date
         # we use the property of CountVectorizer to keep the order of the original texts
-        out_df["pub_date"] = news_df["pub_date"]
+        out_df["pub_date"] = NewsArticles._extract_date(
+            dates_series=news_df["pub_date"])
         out_df.set_index('pub_date', append=True, inplace=True)
         out_df.rename_axis(["id", "pub_date"], inplace=True)
 
@@ -266,10 +267,6 @@ class NewsArticles:
         That is, `df` is not calculated with respect to the whole collection of documents, but
         to the collection of documents on a given date. This will allows us to compare `df` trends over time.
         """
-        if self.dates is None:
-            raise AttributeError(
-                "`self.dates` attribute must be defined to compute `kword_doc_freq`!"
-            )
         if self._kword_raw_tf is None:
             raise AttributeError("`kword_raw_tf` must be calculated first!")
 
@@ -277,10 +274,12 @@ class NewsArticles:
             # whether a keyword appear in an article yes or no (regardless of how many times)
             kwc_bin = self._kword_raw_tf.applymap(lambda cell: 1
                                                   if cell > 0 else 0)
-            kwc_bin['article_date'] = self.dates
-            # relative document frequency (per date)
-            self._kword_docfreq = kwc_bin.groupby('article_date').sum(
-            ) / kwc_bin.groupby('article_date').count()
+
+            self._kword_docfreq = kwc_bin.groupby(
+                kwc_bin.index.get_level_values('pub_date').values).sum(
+                ) / kwc_bin.groupby(
+                    kwc_bin.index.get_level_values('pub_date').values).count()
+
         return self._kword_docfreq
 
     @property
@@ -289,11 +288,6 @@ class NewsArticles:
         Calculates document-frequency for the over-arching themes.
         A theme occurrence is defined regardless of which specific keyword(s) occur and how many occurrences.
         """
-        if self.dates is None:
-            raise AttributeError(
-                "`self.dates` attribute must be defined to compute `kword_doc_freq`!"
-            )
-
         if self._kword_raw_tf is None:
             raise AttributeError("`kword_raw_tf` must be calculated first!")
 
@@ -303,9 +297,10 @@ class NewsArticles:
 
         # binary frequency (yes/no)
         kwc_theme_bin = kwc_theme.applymap(lambda cell: 1 if cell > 0 else 0)
-        kwc_theme_bin['article_date'] = self.dates
-        self._theme_docfreq = kwc_theme_bin.groupby('article_date').sum(
-        ) / kwc_theme_bin.groupby('article_date').count()
+        self._theme_docfreq = kwc_theme_bin.groupby(
+            kwc_theme_bin.index.get_level_values('pub_date').values
+        ).sum() / kwc_theme_bin.groupby(
+            kwc_theme_bin.index.get_level_values('pub_date').values).count()
         return self._theme_docfreq
 
     @staticmethod
@@ -316,15 +311,15 @@ class NewsArticles:
         return len(list(ngrams(text.split(), ngram)))
 
     @staticmethod
-    def _extract_date(news_df: pd.DataFrame) -> List[datetime]:
+    def _extract_date(dates_series: pd.Series) -> List[datetime]:
         """
-        Extract the dates from the dataset and encode them in date format.
+        Encode the dates contained in a pandas.Series in date format.
 
         Args:
-            news_df: pandas.Dataframe, results of `get_news_articles.IngestNews`.
+            dates_series: pandas.Series containing dates, results of `get_news_articles.IngestNews`.
 
         Returns:
-            List of dates.
+            List of dates in date format.
         """
         date_formats = {3: r"%B %d, %Y", 4: r"%B %d, %Y %A"}
 
@@ -333,7 +328,7 @@ class NewsArticles:
 
         list_dates = [
             datetime.strptime(date, _get_date_format(date))
-            for date in news_df.pub_date
+            for date in dates_series
         ]
 
         return list_dates
