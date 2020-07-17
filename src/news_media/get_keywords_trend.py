@@ -18,11 +18,12 @@ from datetime import datetime
 
 from sklearn.feature_extraction.text import CountVectorizer
 from nltk.util import ngrams
+from nltk.tokenize import word_tokenize
 
 from math import log10
 
-from src.utils import load_config_yaml
-from src.preproc_text import tokenise_sent
+from src.utils import load_config_yaml, chain_functions
+from src.preproc_text import tokenise_sent, tokenise_word, remove_punctuation, remove_stopwords, flatten_irregular_listoflists
 
 # Constants
 UK_FILENAME = "uk_news.csv"
@@ -35,14 +36,30 @@ DIR_EXT = os.environ.get("DIR_EXT")
 CONFIG_FILE = os.path.join(DIR_EXT, CONFIG_FILE_NAME)
 CONFIG = load_config_yaml(CONFIG_FILE)
 
-print(type(CONFIG))
-
-VOCAB = CONFIG['Actors'] + CONFIG['BehavSci'] + CONFIG['Nudge'] + CONFIG[
+KWORDS = CONFIG['Actors'] + CONFIG['BehavSci'] + CONFIG['Nudge'] + CONFIG[
     'Positive'] + CONFIG['Negative'] + CONFIG['Covid'] + CONFIG[
         'Fatigue'] + CONFIG['Immunity']
 
+# keywords that are composed by more than one word
+NONUNIGRAMS = [kword for kword in KWORDS if " " in kword]
+
 # CONFIG.keys that do not contain keyword groups
 NON_KWORD_CONFIG = ["NgramRange", "SingularPlural"]
+
+
+# preprocess text first: lower, remove punctuation and stopwords, substitute n-gram keywords with their unigram version
+def from_ngrams_to_unigrams(text: str) -> str:
+    """Substitites n-gram keywords with their underscored unigram version"""
+    for kword in NONUNIGRAMS:
+        text = text.replace(kword, kword.replace(" ", "_"))
+    return text
+
+
+TEXT_PREPROC_PIPE = chain_functions(
+    lambda x: x.lower(), tokenise_sent, tokenise_word, remove_punctuation,
+    remove_stopwords, flatten_irregular_listoflists, list,
+    lambda x: ' '.join(x), lambda x: re.sub(r'[.]+(?![0-9])', r' ', x),
+    from_ngrams_to_unigrams)
 
 
 class NewsArticles:
@@ -62,6 +79,10 @@ class NewsArticles:
         # Remove rows that mark start of batches
         bool_series = df["title"].str.startswith("Title (", na=False)
         df = df[~bool_series].copy()
+        # Proprocess Text
+        df['preproc_text'] = [
+            TEXT_PREPROC_PIPE(article) for article in df.full_text
+        ]
 
         self.data = df
         self.country = country
@@ -81,7 +102,7 @@ class NewsArticles:
     @staticmethod
     def _compute_kword_raw_tf(news_df: pd.DataFrame) -> pd.DataFrame:
         """
-        Computes the document-term frequency matrix for the keywords in the VOCAB.
+        Computes the document-term frequency matrix for the keywords in the KWORDS list.
 
         Args:
             news_df: pandas.Dataframe, results of `get_news_articles.IngestNews`.
@@ -89,10 +110,11 @@ class NewsArticles:
         Returns:
             The document-term frequency matrix for the keywords.
         """
-        vec = CountVectorizer(vocabulary=VOCAB,
+        vec = CountVectorizer(vocabulary=KWORDS,
                               stop_words=None,
-                              ngram_range=(1, CONFIG['NgramRange']))
-        results_mat = vec.fit_transform(news_df.full_text)
+                              tokenizer=word_tokenize,
+                              ngram_range=(1, 1))
+        results_mat = vec.fit_transform(news_df['preproc_text'])
 
         # sparse to dense matrix
         results_mat = results_mat.toarray()
@@ -101,11 +123,11 @@ class NewsArticles:
         vec_feature_names = vec.get_feature_names()
 
         # test that vec's feature names == vocab
-        assert vec_feature_names == VOCAB
+        assert vec_feature_names == KWORDS
 
         # make a table with word frequencies as values and vocab as columns
         out_df = pd.DataFrame(data=results_mat, columns=vec_feature_names)
-        out_df = NewsArticles._remove_duplicate_counts(out_df)
+        # out_df = NewsArticles._remove_duplicate_counts(out_df)
         out_df = NewsArticles._combined_plur_sing_kwords(out_df)
 
         # append document id and pub date
@@ -116,22 +138,6 @@ class NewsArticles:
         out_df.rename_axis(["id", "pub_date"], inplace=True)
 
         return out_df
-
-    @staticmethod
-    def _remove_duplicate_counts(df: pd.DataFrame) -> pd.DataFrame:
-        """
-        'behavioural insights team' contains 'behavioural insights' meaning that
-        when 'behavioural insights team' occurs in the text, it is double-counted
-        (i.e., 1 x 'behavioural insights team' and 1 x 'behavioural insights').
-
-        This function removes its count from  'behavioural insights'.
-
-        Same for the other cases.
-        """
-        df['behavioural insights'] = df['behavioural insights'] - df[
-            'behavioural insights team']
-        df['nudge'] = df['nudge'] - df['nudge unit'] - df['nudge theory']
-        return df
 
     @staticmethod
     def _combined_plur_sing_kwords(df: pd.DataFrame) -> pd.DataFrame:
@@ -203,14 +209,18 @@ class NewsArticles:
         """
         Returns normalised frequency of keywords by dividing a keyword's raw frequency by the lenght
         of the document in which it occurs.
-        The length of the document is calculated as number of unigrams even if the keyword is a bigram
-        or a trigram, as we consider keywords as their own words even if they are composed of two or three ngrams.
+        The length of the document is calculated as number of unigrams.
+
+        All keywords (also those composed by ngrams
+        (e.g., 'nudge unit') have been previously turned into unigram (i.e., 'nudge_unit'). This is because we believe
+        these keywords can be considered as a single word. That is, both the words ("nudge" and "unit") can have
+        independent meaning, however, when they are together, they express a precise, unique concept.
         """
         if self._kword_normlen_tf is None:
             try:
                 self._kword_normlen_tf = self._kword_raw_tf.div([
                     NewsArticles.get_num_ngrams(text, 1)
-                    for text in self.data.full_text
+                    for text in self.data.preproc_text
                 ],
                                                                 axis=0)
             except AttributeError:
@@ -385,7 +395,7 @@ def collect_kword_opinioncontext(
 
     # max_idx = len(sentences)
     results = []
-    for keyw in VOCAB:
+    for keyw in KWORDS:
         for idx, sentence in enumerate(sentences):
             if keyw in sentence:
                 context1 = (idx, sentence)
@@ -409,8 +419,8 @@ def remove_duplicates(
     """
     Removes duplicate results.
 
-    Example: cases that are double counted because both "nudge theory" and "nudge"
-    have been identified for the same sentence.
+    Example: cases that are double counted because both "nudges" and "nudge"
+    have been identified for the same sentence (because the string "nudges" contains "nudge").
 
     Args:
         list_results:   List of results. Each result is also a list whose first element is the keyword (str)
@@ -429,24 +439,6 @@ def remove_duplicates(
     }
     kws_list = [result[0] for result in list_results]
 
-    # keyword list contains both 'nudge theory' and 'nudge' for same sentences
-    if ("nudge theory" and "nudge"
-            in kws_list) and (kws_idx_first_sent_dict.get('nudge')
-                              == kws_idx_first_sent_dict.get('nudge theory')):
-        # get rid of "nudge" results as it is a duplicate
-        list_results = [
-            result for result in list_results if result[0] != "nudge"
-        ]
-
-    # keyword list contains both 'nudge uniit' and 'nudge' for same sentences
-    if ("nudge unit" and "nudge"
-            in kws_list) and (kws_idx_first_sent_dict.get('nudge')
-                              == kws_idx_first_sent_dict.get('nudge unit')):
-        # get rid of "nudge" results as it is a duplicate
-        list_results = [
-            result for result in list_results if result[0] != "nudge"
-        ]
-
     # keyword list contains both 'nudges' and 'nudge' for same sentences
     if ("nudges" and "nudge"
             in kws_list) and (kws_idx_first_sent_dict.get('nudge')
@@ -454,74 +446,6 @@ def remove_duplicates(
         # get rid of "nudge" results as it is a duplicate
         list_results = [
             result for result in list_results if result[0] != "nudge"
-        ]
-
-    # keyword list contains both 'choice architecture' and 'choice architect' for same sentences
-    if ("choice architecture" and "choice architect" in kws_list) and (
-            kws_idx_first_sent_dict.get('choice architect')
-            == kws_idx_first_sent_dict.get('choice architecture')):
-        # get rid of "choice architect" results as it is a duplicate
-        list_results = [
-            result for result in list_results
-            if result[0] != "choice architect"
-        ]
-
-    if ("behavioural insights" and "behavioural insight" in kws_list) and (
-            kws_idx_first_sent_dict.get('behavioural insight')
-            == kws_idx_first_sent_dict.get('behavioural insights')):
-        list_results = [
-            result for result in list_results
-            if result[0] != "behavioural insight"
-        ]
-
-    #
-    if ("behavioural insights team" and "behavioural insights" in kws_list
-        ) and (kws_idx_first_sent_dict.get('behavioural insights')
-               == kws_idx_first_sent_dict.get('behavioural insights team')):
-        list_results = [
-            result for result in list_results
-            if result[0] != "behavioural insights"
-        ]
-
-    if ("behavioural insights team" and "behavioural insight" in kws_list
-        ) and (kws_idx_first_sent_dict.get('behavioural insight')
-               == kws_idx_first_sent_dict.get('behavioural insights team')):
-        list_results = [
-            result for result in list_results
-            if result[0] != "behavioural insight"
-        ]
-
-    #
-    if ("behavioural scientists" and "behavioural scientist" in kws_list) and (
-            kws_idx_first_sent_dict.get('behavioural scientist')
-            == kws_idx_first_sent_dict.get('behavioural scientists')):
-        list_results = [
-            result for result in list_results
-            if result[0] != "behavioural scientist"
-        ]
-
-    if ("behavioural sciences" and "behavioural science" in kws_list) and (
-            kws_idx_first_sent_dict.get('behavioural science')
-            == kws_idx_first_sent_dict.get('behavioural sciences')):
-        list_results = [
-            result for result in list_results
-            if result[0] != "behavioural science"
-        ]
-
-    if ("behavioural economists" and "behavioural economist" in kws_list) and (
-            kws_idx_first_sent_dict.get('behavioural economist')
-            == kws_idx_first_sent_dict.get('behavioural economists')):
-        list_results = [
-            result for result in list_results
-            if result[0] != "behavioural economist"
-        ]
-
-    if ("behavioural analysts" and "behavioural analyst" in kws_list) and (
-            kws_idx_first_sent_dict.get('behavioural analyst')
-            == kws_idx_first_sent_dict.get('behavioural analysts')):
-        list_results = [
-            result for result in list_results
-            if result[0] != "behavioural analyst"
         ]
 
     if ("psychologists" and "psychologist"
@@ -560,64 +484,25 @@ if __name__ == "__main__":
     uk_news = NewsArticles(country="uk")
     print(uk_news.data.shape)
 
-    # THIS IS NO LONGER NEEDED
+    # calculate all the metrics
+    uk_news.kword_raw_tf
+    uk_news.theme_rawfreq
+    uk_news.kword_normlen_tf
+    uk_news.theme_normlen_f
+    uk_news.kword_normlog_tf
+    uk_news.theme_normlog_f
+    uk_news.theme_docfreq
+    uk_news.kword_docfreq
 
-    # 1. Count of all occurrences per article/date
-    uk_news.count_keywords()
-    print(uk_news.keywords_count.shape)
-    print(uk_news.keywords_count.columns)
-    print(uk_news.keywords_count.head(2))
-
-    # Get date in date format
-    uk_news.extract_date()
-    print(uk_news.date[:10])
-
-    # TODO: add the following as class methods
-
-    uk_news.keywords_count['date'] = uk_news.date
-    # count number of articles per date
-    n_articles_per_date = uk_news.keywords_count.groupby('date').size()
-    n_articles_per_date = n_articles_per_date.reset_index()
-    n_articles_per_date.rename(columns={0: 'n_articles'}, inplace=True)
-
-    # a) add keyword higher-level grouping
-    long_counts_by_date = pd.melt(uk_news.keywords_count,
-                                  id_vars=['date', 'title'],
-                                  value_vars=VOCAB,
-                                  var_name='keyword',
-                                  value_name='count_kw_occurrences')
-    keywords_groups = CONFIG.copy()
-    keywords_groups.pop('NgramRange')
-    list_kw_groups = [
-        group for group, list_kws_ in keywords_groups.items()
-        for kw in long_counts_by_date.keyword if kw in list_kws_
-    ]
-    long_counts_by_date['keyword_group'] = list_kw_groups
-    # attach n of articles per date
-    long_counts_by_date = long_counts_by_date.merge(n_articles_per_date,
-                                                    how='left',
-                                                    on='date')
-    # b) sum together by keywords-groupings
-    counts_by_kwgroups_date = long_counts_by_date.groupby(
-        ['keyword_group', 'date',
-         'n_articles']).agg({'count_kw_occurrences': 'sum'})
-
-    # 2. Calculate in how many articles each keyword appeared on a given date
-    counts_by_date = uk_news.keywords_count.groupby('date').apply(
-        lambda x: x[x > 0].count()).reset_index()
-
-    counts_by_date['n_articles'] = n_articles_per_date.to_list()
-    cols_order_1 = ['date', 'n_articles'] + VOCAB
-    counts_by_date = counts_by_date[cols_order_1]
-
-    uk_news.keywords_count['title'] = uk_news.data.title
-    cols_order = ['date', 'title'] + VOCAB
-    uk_news.keywords_count = uk_news.keywords_count[cols_order]
-
-    # export results as CSV
-    uk_news.keywords_count.to_csv(
-        os.path.join(DIR_DATA_INT, "keywords_count1.csv"))
-    counts_by_date.to_csv(
-        os.path.join(DIR_DATA_INT, "articles_with_keyword_count_by_date.csv"))
-    counts_by_kwgroups_date.to_csv(
-        os.path.join(DIR_DATA_INT, "kwgroups_count_by_date.csv"))
+    # save them as csv so that they can be load in in R
+    uk_news.kword_raw_tf.to_csv(os.path.join(DIR_DATA_INT, "kword_raw_tf.csv"))
+    uk_news.theme_rawfreq.to_csv(
+        os.path.join(DIR_DATA_INT, "theme_rawfreq.csv"))
+    uk_news.kword_normlen_tf.to_csv(
+        os.path.join(DIR_DATA_INT, "kword_normlen_tf.csv"))
+    uk_news.theme_normlen_f.to_csv(
+        os.path.join(DIR_DATA_INT, "theme_normlen_f.csv"))
+    uk_news.theme_docfreq.to_csv(
+        os.path.join(DIR_DATA_INT, "theme_docfreq.csv"))
+    uk_news.kword_docfreq.to_csv(
+        os.path.join(DIR_DATA_INT, "kword_docfreq.csv"))
