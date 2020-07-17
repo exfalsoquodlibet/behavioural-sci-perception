@@ -7,42 +7,42 @@ Actors:
   - michie
   - chater
   - spi-b
-  - nudge unit
-  - behavioural insights team
+  - nudge_unit
+  - behavioural_insights_team
 BehavSci:
-  - behavioural science
-  - behavioural sciences
-  - behavioural scientist
-  - behavioural scientists
-  - behavioural insight
-  - behavioural insights
-  - behaviour change
-  - behavioural economics
-  - behavioural economist
-  - behavioural economists
-  - behavioural policy
-  - behavioural analysis
-  - behavioural analyst
-  - behavioural analysts
+  - behavioural_science
+  - behavioural_sciences
+  - behavioural_scientist
+  - behavioural_scientists
+  - behavioural_insight
+  - behavioural_insights
+  - behaviour_change
+  - behavioural_economics
+  - behavioural_economist
+  - behavioural_economists
+  - behavioural_policy
+  - behavioural_analysis
+  - behavioural_analyst
+  - behavioural_analysts
   - psychologists
   - psychologist
   - psychology
-  - choice architecture
-  - choice architect
+  - choice_architecture
+  - choice_architect
 Nudge:
   - nudges
   - nudge
   - nudging
-  - nudge theory
-  - irrational behaviour
+  - nudge_theory
+  - irrational_behaviour
 Positive:
   - magic
 Negative:
   - surveillance
   - paternalism
-  - nanny state
-  - voodoo science
-  - police state
+  - nanny_state
+  - voodoo_science
+  - police_state
 Covid:
   - pandemic
   - epidemic
@@ -51,22 +51,22 @@ Covid:
   - covid
   - covid-19
   - covid19
-  - health emergency
+  - health_emergency
 Fatigue:
-  - behavioural fatigue
+  - behavioural_fatigue
 Immunity:
-  - herd immunity
+  - herd_immunity
 SingularPlural:
-  behavioural science:
-    behavioural sciences
-  behavioural scientist:
-    behavioural scientists
-  behavioural insight:
-    behavioural insights
-  behavioural economist:
-    behavioural economists
-  behavioural analyst:
-    behavioural analysts
+  behavioural_science:
+    behavioural_sciences
+  behavioural_scientist:
+    behavioural_scientists
+  behavioural_insight:
+    behavioural_insights
+  behavioural_economist:
+    behavioural_economists
+  behavioural_analyst:
+    behavioural_analysts
   psychologist:
     psychologists
   nudge:
