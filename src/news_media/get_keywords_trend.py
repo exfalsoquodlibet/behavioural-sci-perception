@@ -41,7 +41,7 @@ KWORDS = CONFIG['Actors'] + CONFIG['BehavSci'] + CONFIG['Nudge'] + CONFIG[
         'Fatigue'] + CONFIG['Immunity']
 
 # keywords that are composed by more than one word
-NONUNIGRAMS = [kword for kword in KWORDS if " " in kword]
+NONUNIGRAMS = [kword.replace("_", " ") for kword in KWORDS if "_" in kword]
 
 # CONFIG.keys that do not contain keyword groups
 NON_KWORD_CONFIG = ["NgramRange", "SingularPlural"]
@@ -98,6 +98,7 @@ class NewsArticles:
         self._theme_normlen_f = None
         self._theme_normlog_f = None
         self._theme_docfreq = None
+        self._unigram_count_perdoc = None
 
     @staticmethod
     def _compute_kword_raw_tf(news_df: pd.DataFrame) -> pd.DataFrame:
@@ -313,6 +314,15 @@ class NewsArticles:
             kwc_theme_bin.index.get_level_values('pub_date').values).count()
         return self._theme_docfreq
 
+    @property
+    def unigram_count_perdoc(self):
+        if self._unigram_count_perdoc is None:
+            self._unigram_count_perdoc = [
+                NewsArticles.get_num_ngrams(text, 1)
+                for text in self.data.preproc_text
+            ]
+        return self._unigram_count_perdoc
+
     @staticmethod
     def get_num_ngrams(text: str, ngram: int) -> int:
         """
@@ -493,6 +503,7 @@ if __name__ == "__main__":
     uk_news.theme_normlog_f
     uk_news.theme_docfreq
     uk_news.kword_docfreq
+    uk_news.unigram_count_perdoc
 
     # save them as csv so that they can be load in in R
     uk_news.kword_raw_tf.to_csv(os.path.join(DIR_DATA_INT, "kword_raw_tf.csv"))
@@ -506,3 +517,5 @@ if __name__ == "__main__":
         os.path.join(DIR_DATA_INT, "theme_docfreq.csv"))
     uk_news.kword_docfreq.to_csv(
         os.path.join(DIR_DATA_INT, "kword_docfreq.csv"))
+    pd.DataFrame(uk_news.unigram_count_perdoc).to_csv(
+        os.path.join(DIR_DATA_INT, "unigram_count_perdoc.csv"))
