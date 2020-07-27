@@ -14,35 +14,45 @@ BehavSci:
   - behavioural_sciences
   - behavioural_scientist
   - behavioural_scientists
+Behav_ins:
   - behavioural_insight
   - behavioural_insights
+Behav_chan:
   - behaviour_change
-  - behavioural_economics
-  - behavioural_economist
-  - behavioural_economists
+  - behavioural_change
+Behav_pol:
   - behavioural_policy
+Behav_anal:
   - behavioural_analysis
   - behavioural_analyst
   - behavioural_analysts
+Psych:
   - psychologists
   - psychologist
   - psychology
-  - choice_architecture
-  - choice_architect
+  - psychological_science
+  - psychological_policy
+Econ_behav:
+  - behavioural_economics
+  - behavioural_economist
+  - behavioural_economists
+Econ_irrational:
+  - irrational_behaviour
+  - irrational_choice
+  - irrational_choices
 Nudge:
   - nudges
   - nudge
   - nudging
   - nudge_theory
-  - irrational_behaviour
-Positive:
-  - magic
-Negative:
-  - surveillance
+  - nudge_strategy
+Nudge_choice:
+  - choice_architecture
+  - choice_architect
+Nudge_pater:
   - paternalism
-  - nanny_state
-  - voodoo_science
-  - police_state
+  - libertarian_paternalism
+  - paternalistic
 Covid:
   - pandemic
   - epidemic
@@ -56,6 +66,20 @@ Fatigue:
   - behavioural_fatigue
 Immunity:
   - herd_immunity
+Associations:
+  - surveillance
+  - nanny_state
+  - police_state
+  - voodoo
+  - bogus
+  - magic
+  - make_it_easy
+  - makes_it_easy
+  - made_easy
+  - better_choice
+  - better_choices
+  - piggyback
+  - low_cost
 SingularPlural:
   behavioural_science:
     behavioural_sciences
@@ -76,6 +100,15 @@ SingularPlural:
     - covid
     - coronavirus
     - corona
+  made_easy:
+    - make_it_easy
+    - makes_it_easy
+  better_choice:
+    better_choices
+  irrational_choice:
+    - irrational_choices
+  
+  
   
   
 
