@@ -36,9 +36,12 @@ DIR_EXT = os.environ.get("DIR_EXT")
 CONFIG_FILE = os.path.join(DIR_EXT, CONFIG_FILE_NAME)
 CONFIG = load_config_yaml(CONFIG_FILE)
 
-KWORDS = CONFIG['Actors'] + CONFIG['BehavSci'] + CONFIG['Nudge'] + CONFIG[
-    'Positive'] + CONFIG['Negative'] + CONFIG['Covid'] + CONFIG[
-        'Fatigue'] + CONFIG['Immunity']
+KWORDS = CONFIG['Actors'] + CONFIG['BehavSci'] + CONFIG['Behav_ins'] + CONFIG[
+    'Behav_chan'] + CONFIG['Behav_pol'] + CONFIG['Behav_anal'] + CONFIG[
+        'Psych'] + CONFIG['Econ_behav'] + CONFIG['Econ_irrational'] + CONFIG[
+            'Nudge'] + CONFIG['Nudge_choice'] + CONFIG['Nudge_pater'] + CONFIG[
+                'Associations'] + CONFIG['Covid'] + CONFIG['Fatigue'] + CONFIG[
+                    'Immunity']
 
 # keywords that are composed by more than one word
 NONUNIGRAMS = [kword.replace("_", " ") for kword in KWORDS if "_" in kword]
@@ -79,6 +82,8 @@ class NewsArticles:
         # Remove rows that mark start of batches
         bool_series = df["title"].str.startswith("Title (", na=False)
         df = df[~bool_series].copy()
+        # Remove duplicates
+        df.drop_duplicates(subset="title", keep='last', inplace=True)
         # Proprocess Text
         df['preproc_text'] = [
             TEXT_PREPROC_PIPE(article) for article in df.full_text
@@ -382,8 +387,7 @@ def collect_kword_opinioncontext(
     """
     Extracts the opinion context for each keyword' occurrence in a article.
 
-    The opinion context is defined as the sentence where the keyword occurrence and the
-    following two sentences.
+    The opinion context is defined as the sentence where the keyword is mentioned.
 
     Args:
         article:    text of the article as string.
@@ -391,102 +395,18 @@ def collect_kword_opinioncontext(
     Returns:
         A list of list. Each sublist contains:
         - first element: the keyword (str) that occurred in the article
-        - second element: a tuple of (index i of first sentence where the keyword occurs, the first senetence)
-        - third element: a tuple of (index i+1, text) of the next sentence
-        - fourth element: a tuple of (index i+2, text) of the next-next sentence
-
+        - second element: a tuple of (index i of the sentence where the keyword occurs, the sentence text)
     """
 
-    # add a space after dots or commas that have no space afterwards
+    # add a space after dots that have no space afterwards if they are between alpha characters
     # (e.g., 'I know.But' -> 'I know. But')
-    article = re.sub(r'(?<=[.;!?:])(?=[^\s])', r' ', article)
+    # article = re.sub(r'(?<=[.;!?:])(?=[^\s])', r' ', article)
+    article = re.sub(r'([,.!?])([a-zA-Z])', r'\1 \2', article)
 
-    sentences = tokenise_sent(article.lower())
+    sentences = tokenise_sent(from_ngrams_to_unigrams(article.lower()))
 
-    # max_idx = len(sentences)
-    results = []
-    for keyw in KWORDS:
-        for idx, sentence in enumerate(sentences):
-            if keyw in sentence:
-                context1 = (idx, sentence)
-                kw_result = [context1]
-                try:
-                    context2 = (idx + 1, sentences[idx + 1])
-                    kw_result.append(context2)
-                    context3 = (idx + 2, sentences[idx + 2])
-                    kw_result.append(context3)
-                except IndexError:
-                    pass
-                kw_result = [keyw, kw_result]
-                results.append(kw_result)
-
-    return remove_duplicates(results)
-
-
-# TODO: streamline / refactor
-def remove_duplicates(
-        list_results: List[list]) -> List[Union[str, List[tuple]]]:
-    """
-    Removes duplicate results.
-
-    Example: cases that are double counted because both "nudges" and "nudge"
-    have been identified for the same sentence (because the string "nudges" contains "nudge").
-
-    Args:
-        list_results:   List of results. Each result is also a list whose first element is the keyword (str)
-                        and second element is a list of tuples; the first element of the first tuple is the index of the sentence
-                        where the keyword appears.
-
-    Returns:
-        De-duplicated list of results.
-    """
-
-    # extract list of keywords
-    # and  # extract index of first sentence for each keyword
-    kws_idx_first_sent_dict = {
-        result[0]: result[1][0][0]
-        for result in list_results
-    }
-    kws_list = [result[0] for result in list_results]
-
-    # keyword list contains both 'nudges' and 'nudge' for same sentences
-    if ("nudges" and "nudge"
-            in kws_list) and (kws_idx_first_sent_dict.get('nudge')
-                              == kws_idx_first_sent_dict.get('nudges')):
-        # get rid of "nudge" results as it is a duplicate
-        list_results = [
-            result for result in list_results if result[0] != "nudge"
-        ]
-
-    if ("psychologists" and "psychologist"
-            in kws_list) and (kws_idx_first_sent_dict.get('psychologist')
-                              == kws_idx_first_sent_dict.get('psychologists')):
-        list_results = [
-            result for result in list_results if result[0] != "psychologist"
-        ]
-
-    if ("coronavirus" and "corona"
-            in kws_list) and (kws_idx_first_sent_dict.get('corona')
-                              == kws_idx_first_sent_dict.get('coronavirus')):
-        list_results = [
-            result for result in list_results if result[0] != "corona"
-        ]
-
-    if ("covid19" and "covid"
-            in kws_list) and (kws_idx_first_sent_dict.get('covid')
-                              == kws_idx_first_sent_dict.get('covid19')):
-        list_results = [
-            result for result in list_results if result[0] != "covid"
-        ]
-
-    if ("covid-19" and "covid"
-            in kws_list) and (kws_idx_first_sent_dict.get('covid')
-                              == kws_idx_first_sent_dict.get('covid-19')):
-        list_results = [
-            result for result in list_results if result[0] != "covid"
-        ]
-
-    return list_results
+    return [[keyw, (idx, sentence)] for idx, sentence in enumerate(sentences)
+            for keyw in KWORDS if keyw in word_tokenize(sentence)]
 
 
 if __name__ == "__main__":
