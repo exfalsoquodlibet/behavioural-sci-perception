@@ -1,0 +1,88 @@
+american_behav_scientists:
+  - thaler
+  - sunstein
+  - kahneman
+halpern: halpern
+michie: michie
+chater: chater
+spi-b: spi-b
+behav_insights_team: 
+  - behavioural_insights_team
+  - nudge_unit
+behav_science:
+  - behavioural_science
+  - behavioural_sciences
+  - behavioural_policy
+  - behavioural_scientists
+behav_insight:
+  - behavioural_insight
+  - behavioural_insights
+behav_change:
+  - behaviour_change
+  - behavioural_change
+behav_scientist:
+  - behavioural_scientist
+behav_analysis:
+  - behavioural_analysis
+  - behavioural_analyst
+  - behavioural_analysts
+psychology:
+  - psychologists
+  - psychology
+  - psychological_science
+  - psychological_policy
+psychologist:
+  - psychologist
+behav_econ:
+  - behavioural_economics
+  - behavioural_economists
+behavioural_economist:
+  - behavioural_economist
+irrational_econ:
+  - irrational_behaviour
+  - irrational_choice
+  - irrational_choices
+nudge:
+  - nudges
+  - nudge
+  - nudging
+  - nudge_theory
+  - nudge_strategy
+  - paternalism
+  - libertarian_paternalism
+  - paternalistic
+nudge_choice:
+  - choice_architecture
+  - choice_architect
+  
+# covid:
+#  - pandemic
+#  - epidemic
+#  - corona
+#  - coronavirus
+#  - covid
+#  - covid-19
+#  - covid19
+#  - health_emergency
+# fatigue:
+#  - behavioural_fatigue
+# immunity:
+#  - herd_immunity
+# surveillance: surveillance
+# nanny_state: nanny_state
+# police_state: police_state
+# voodoo: voodoo
+# bogus: bogus
+# magic: magic
+# made_easy:
+#  - made_easy
+#  - make_it_easy
+#  - makes_it_easy
+# better_choice:
+#  - better_choice
+#  - better_choices
+# piggyback: piggyback
+# low_cost: low_cost
+
+
+  

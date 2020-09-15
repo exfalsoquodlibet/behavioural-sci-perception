@@ -201,16 +201,26 @@ extension_map = {
 if __name__ == "__main__":
 
     print("Reading in UK news data...")
+
+    print("Batch 1...")
     uk_news = IngestNews(filename=os.path.join(
         os.environ.get("DIR_DATA_RAW"), CONFIG['NewsFileUK']['FileName']),
                          sheetname=CONFIG['NewsFileUK']['SheetName'])
-
-    # Filter columns
     print("Filtering data columns...")
     uk_news.select_columns()
 
-    # Rename columns
     print("Renaming data columns...")
     uk_news.rename_columns()
 
-    uk_news.save_data_to_csv(output_name=CONFIG['NewsFileUK']['SaveAs'])
+    print("Batch 2...")
+    uk_news2 = IngestNews(filename=os.path.join(
+        os.environ.get("DIR_DATA_RAW"), CONFIG['NewsFileUK_2']['FileName']),
+                          sheetname=CONFIG['NewsFileUK_2']['SheetName'])
+
+    print("Filtering data columns...")
+    uk_news2.select_columns()
+
+    print("Renaming data columns...")
+    uk_news2.rename_columns()
+
+    uk_news2.save_data_to_csv(output_name=CONFIG['NewsFileUK_2']['SaveAs'])

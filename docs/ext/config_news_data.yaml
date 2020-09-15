@@ -2,8 +2,12 @@ NewsFileUK:
     FileName: UK_newspapers.xlsx
     SheetName: News
     SaveAs: uk_news.csv
+NewsFileUK_2:
+    FileName: UK_newspapers_sample2.xlsx
+    SheetName: News
+    SaveAs: uk_news_sample2.csv
 Fields:
-    - Title (1-100)
+    - Title
     - Published date
     - Publication location
     - Publication
@@ -25,7 +29,7 @@ Fields:
     - Term
     - Ticker
 FieldsToKeep:
-    - Title (1-100)
+    - Title
     - Published date
     - Publication location
     - Publication
