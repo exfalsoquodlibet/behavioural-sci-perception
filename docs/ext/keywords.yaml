@@ -66,47 +66,47 @@ Fatigue:
   - behavioural_fatigue
 Immunity:
   - herd_immunity
-Associations:
-  - surveillance
-  - nanny_state
-  - police_state
-  - voodoo
-  - bogus
-  - magic
-  - make_it_easy
-  - makes_it_easy
-  - made_easy
-  - better_choice
-  - better_choices
-  - piggyback
-  - low_cost
-SingularPlural:
-  behavioural_science:
-    behavioural_sciences
-  behavioural_scientist:
-    behavioural_scientists
-  behavioural_insight:
-    behavioural_insights
-  behavioural_economist:
-    behavioural_economists
-  behavioural_analyst:
-    behavioural_analysts
-  psychologist:
-    psychologists
-  nudge:
-    nudges
-  covid19:
-    - covid-19
-    - covid
-    - coronavirus
-    - corona
-  made_easy:
-    - make_it_easy
-    - makes_it_easy
-  better_choice:
-    better_choices
-  irrational_choice:
-    - irrational_choices
+# Associations:
+#  - surveillance
+#  - nanny_state
+#  - police_state
+#  - voodoo
+#  - bogus
+#  - magic
+#  - make_it_easy
+#  - makes_it_easy
+#  - made_easy
+#  - better_choice
+#  - better_choices
+#  - piggyback
+#  - low_cost
+# SingularPlural:
+#  behavioural_science:
+#    behavioural_sciences
+#  behavioural_scientist:
+#    behavioural_scientists
+#  behavioural_insight:
+#    behavioural_insights
+#  behavioural_economist:
+#    behavioural_economists
+#  behavioural_analyst:
+#    behavioural_analysts
+#  psychologist:
+#    psychologists
+#  nudge:
+#    nudges
+#  covid19:
+#    - covid-19
+#    - covid
+#    - coronavirus
+#    - corona
+  # made_easy:
+  #  - make_it_easy
+  #  - makes_it_easy
+  # better_choice:
+  #  better_choices
+#  irrational_choice:
+#    - irrational_choices
   
   
   
