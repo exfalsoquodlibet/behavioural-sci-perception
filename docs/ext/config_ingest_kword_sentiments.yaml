@@ -1,0 +1,21 @@
+FileBatch1:
+  FileName: sent_kword_pairs_b1.xlsx
+  SheetNames:
+    - sample_0-15_200-210
+    - sample_16-199
+    - sample_211-350
+    - sample_quoted_keywords
+    - sample_351-480
+    - sample_481-605
+  ExpectedCols:
+    - 'article_id' 
+    - 'title' 
+    - 'pub_date' 
+    - 'full_text' 
+    - 'kword' 
+    - 'opinion_context' 
+    - 'opinion_context_id'
+    - 'keyword_sentiment' 
+    - 'refers_to_gov'
+    - 'gov_sentiment'
+  SaveAs: kword_sentiments_b1.csv
