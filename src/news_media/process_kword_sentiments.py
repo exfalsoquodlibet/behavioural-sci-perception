@@ -9,8 +9,11 @@ from src.utils import load_config_yaml
 from src.news_media.get_keywords_trend import expand_dict
 
 # Input data
+DIR_EXT = os.environ.get("DIR_EXT")
+CONFIG_DATA_FILE = os.path.join(DIR_EXT, "config_ingest_kword_sentiments.yaml")
+CONFIG_DATA = load_config_yaml(CONFIG_DATA_FILE)
+FILENAME = CONFIG_DATA['Outputname']
 DIR_DATA = os.environ.get("DIR_DATA_INTERIM")
-FILENAME = "batch1_kword_sent.csv"
 
 # Configuration files for keywords grouping
 DIR_EXT = os.environ.get("DIR_EXT")
@@ -74,7 +77,11 @@ def _extract_date(dates_series: pd.Series) -> List[datetime]:
     Returns:
         List of dates in date format.
     """
-    date_formats = {3: r"%B %d, %Y", 4: r"%B %d, %Y %A"}
+    date_formats = {
+        2: r"%Y-%m-%d %H:%M:%S",
+        3: r"%B %d, %Y",
+        4: r"%B %d, %Y %A"
+    }
 
     def _get_date_format(date: str):
         return date_formats[len(date.split())]
@@ -88,9 +95,7 @@ def _extract_date(dates_series: pd.Series) -> List[datetime]:
 
 
 if __name__ == "__main__":
-
-    BATCH1_FILENAME = "batch1_kword_sent.csv"
-    BATCH1_OUTPUT = "batch1_preproc_kword_sent.pickle"
-    batch1_data = preproc_step(batch=BATCH1_FILENAME)
-    with open(os.path.join(DIR_DATA, BATCH1_OUTPUT), "wb") as output_file:
-        pickle.dump(batch1_data, output_file)
+    OUTPUT = "preproc_kword_sent.pickle"
+    data = preproc_step(batch=FILENAME)
+    with open(os.path.join(DIR_DATA, OUTPUT), "wb") as output_file:
+        pickle.dump(data, output_file)
