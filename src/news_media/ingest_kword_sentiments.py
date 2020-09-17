@@ -66,8 +66,21 @@ def read_data_xl(filename: str) -> Dict[str, pd.DataFrame]:
         raise type(e)("Could not open file:", filename)
 
 
+def join_dfs(df1: pd.DataFrame, df2: pd.DataFrame) -> pd.DataFrame:
+    df = df1.append(df2)
+    return df
+
+
 if __name__ == "__main__":
+
     BATCH1 = CONFIG['FileBatch1']
-    BATCH1_OUTFILE = "batch1_kword_sent.csv"
+    BATCH2 = CONFIG['FileBatch2']
+
     df_batch1 = ingest_data(batch=BATCH1)
-    df_batch1.to_csv(os.path.join(OUTPUT_PATH, BATCH1_OUTFILE))
+    df_batch2 = ingest_data(batch=BATCH2)
+    print(f"batch1 size: {df_batch1.shape}")
+    print(f"batch2 size: {df_batch2.shape}")
+    df = join_dfs(df_batch1, df_batch2)
+    print(f"Joined batches size: {df.shape}")
+
+    df_batch1.to_csv(os.path.join(OUTPUT_PATH, CONFIG['Outputname']))
