@@ -36,3 +36,34 @@ FileBatch2:
     - 'refers_to_gov'
     - 'gov_sentiment'
 Outputname: kword_sentiments_coded.csv
+DuplicatesId:
+  - b2_252.0
+  - b1_279
+  - b1_279
+  - b1_451
+  - b1_598
+  - b1_591
+  - b1_591
+  - b1_601
+  - b1_602
+  - b1_602
+  - b1_234
+  - b1_239
+  - b1_330
+  - b1_332
+  - b2_177.0
+  - b1_594
+  - b1_575
+  - b1_590
+  - b1_371
+  - b1_588
+  - b1_554
+  - b1_599
+  - b1_474
+  - b1_593
+  - b1_395
+  - b1_444
+  - b1_595
+  - b1_456
+  - b1_246
+  - b1_247
