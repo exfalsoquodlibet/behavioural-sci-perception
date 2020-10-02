@@ -1,4 +1,12 @@
-""" TO ADD """
+"""
+This script preprocess the keyword-opinion pairs coded for sentiment by the researchers:
+
+Preprocessing steps:
+- aggregate sub-keywords into keywords
+- exclude sub-keywords no longer used
+- cast date as datetime format
+- remove cases whose publication date is before 2020-01-27 (Monday)
+"""
 
 import os
 import pickle
@@ -39,6 +47,7 @@ def preproc_step(batch=FILENAME):
 
     # Read data
     data = pd.read_csv(os.path.join(DIR_DATA, batch))
+    print(f"size of data before removing unnecessary kwords: {data.shape}")
 
     # check coded keywords that are no longer part of list
     # [kw for kw in data.kword.unique() if kw not in KWORDS+OTHER_IMPORTANT_WORDS]
@@ -49,6 +58,8 @@ def preproc_step(batch=FILENAME):
         kw in KWORDS + ['behavioural_fatigue', 'herd_immunity']
         for kw in data['kword']
     ]].copy()
+
+    print(f"size of data after removing unnecessary kwords: {data.shape}")
 
     # group keywords
     # rename current 'kword' as 'subkword'
@@ -63,6 +74,11 @@ def preproc_step(batch=FILENAME):
     ]
 
     data['pub_date_dt'] = _extract_date(data['pub_date'])
+
+    data = data[data.pub_date_dt >= '2020-01-27'].copy()
+    print(
+        f"size of data after removing articles before '2020-01-27': {data.shape}"
+    )
 
     return data
 
