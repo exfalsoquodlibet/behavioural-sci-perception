@@ -34,7 +34,7 @@ QUOTED_WORDS = ["'" + word + "'" for word in WORDS_TO_EXTRACT] + [
      for word in WORDS_TO_EXTRACT] + [word + '"' for word in WORDS_TO_EXTRACT]
 ALL_WORDS_TO_EXTRACT = WORDS_TO_EXTRACT + QUOTED_WORDS
 
-print(ALL_WORDS_TO_EXTRACT)
+# print(ALL_WORDS_TO_EXTRACT)
 
 
 def collect_kword_opinioncontext(
@@ -87,8 +87,9 @@ if __name__ == "__main__":
     args = data_parser.parse_args()
 
     if args.chosen_file == 1:
-        UK_FILENAME = "uk_news.csv"
+        UK_FILENAME = "uk_news.csv"  # TODO: read from config_news_data.yaml instead
         OUTPUT_FILENAME = "news_df.csv"
+        # OUTPUT_FILENAME = 'kword_sents1.csv'  # TO TEST FOR DIFFERENCES
     elif args.chosen_file == 2:
         UK_FILENAME = "uk_news_sample2.csv"
         OUTPUT_FILENAME = "kword_sents_2.csv"
