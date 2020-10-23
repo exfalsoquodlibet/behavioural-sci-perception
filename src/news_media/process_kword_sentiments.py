@@ -48,6 +48,9 @@ def preproc_step(batch=FILENAME):
     # Read data
     data = pd.read_csv(os.path.join(DIR_DATA, batch))
     print(f"size of data before removing unnecessary kwords: {data.shape}")
+    print(
+        f"N articles before removing unnecessary kwords: {data.article_id.nunique()}"
+    )
 
     # check coded keywords that are no longer part of list
     # [kw for kw in data.kword.unique() if kw not in KWORDS+OTHER_IMPORTANT_WORDS]
@@ -60,6 +63,9 @@ def preproc_step(batch=FILENAME):
     ]].copy()
 
     print(f"size of data after removing unnecessary kwords: {data.shape}")
+    print(
+        f"N articles after removing unnecessary kwords: {data.article_id.nunique()}"
+    )
 
     # group keywords
     # rename current 'kword' as 'subkword'
@@ -75,9 +81,18 @@ def preproc_step(batch=FILENAME):
 
     data['pub_date_dt'] = _extract_date(data['pub_date'])
 
+    print(
+        f"size of data before removing articles before '2020-01-27': {data.shape}"
+    )
+    print(
+        f"N articles before removing articles before '2020-01-27': {data.article_id.nunique()}"
+    )
     data = data[data.pub_date_dt >= '2020-01-27'].copy()
     print(
         f"size of data after removing articles before '2020-01-27': {data.shape}"
+    )
+    print(
+        f"N articles after removing articles before '2020-01-27': {data.article_id.nunique()}"
     )
 
     return data
