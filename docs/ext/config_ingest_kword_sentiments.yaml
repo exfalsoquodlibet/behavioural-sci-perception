@@ -39,15 +39,16 @@ Outputname: kword_sentiments_coded.csv
 DuplicatesId:
   - b2_252.0
   - b1_279
-  - b1_279
+  - b1_393
   - b1_451
   - b1_598
   - b1_591
-  - b1_591
+  - b1_592
   - b1_601
   - b1_602
+  - b1_176
   - b1_602
-  - b1_234
+  - b1_231
   - b1_239
   - b1_330
   - b1_332
