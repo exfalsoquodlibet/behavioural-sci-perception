@@ -7,7 +7,7 @@ Input data: TO ADD
 Outputs: TO ADD
 
 How to run it to calculate frequency measure for a two-week (fornight) period:
-python -m src.news_media.get_keyword_trend -unit_agg "2W-MON"
+python -m src.news_media.get_keywords_trend -unit_agg "2W-MON"
 """
 
 import re
@@ -120,15 +120,19 @@ class NewsArticles:
         # ENSURE DATES BEFORE 27-JAN-2020 WERE REMOVED
         # this exclude 6 articles published on 23-JAN and 26-JAN 2020
         print(df.shape)
+        print(df.article_id.nunique())
         df = df[~df.pub_date.isin(
             ['January 23, 2020 Thursday', 'January 26, 2020 Sunday'])].copy()
         print(df.shape)
+        print(df.article_id.nunique())
+        print(df.columns)
         # this version of data has repeasted measure per article (1 row per keyword occurrence)
 
         # create version of data with only unique info to each article: id, pub_date_dt, title, full_text
         df_uniq_article = df.drop_duplicates('article_id', 'last')[[
             'article_id', 'pub_date_dt', 'title', 'full_text'
         ]]
+        print(df_uniq_article.article_id.nunique())
 
         # Preprocess Text
         df_uniq_article['preproc_text'] = [
