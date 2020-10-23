@@ -42,14 +42,25 @@ def ingest_data(batch, batch_suffix):
             raise Exception(f"Missing required columns in {tab_name}")
         data_df = data_df.append(df)
 
+    print(
+        f"N articles {batch_suffix} at ingestion: {data_df['article_id'].nunique()}"
+    )
+
     # remove kword-sentences that were not coded for sentiments
     # because they were not relevant keywords
     data_df = data_df[~np.isnan(data_df['keyword_sentiment'])].copy()
+
+    print(
+        f"N articles {batch_suffix} after removing now irrelevant keywords: {data_df['article_id'].nunique()}"
+    )
 
     # add batch number as suffix to article_id
     data_df['article_id'] = [
         batch_suffix + str(id) for id in data_df['article_id']
     ]
+
+    print(data_df.article_id.nunique())
+    print(data_df['article_id'].nunique())
 
     return data_df
 
@@ -78,7 +89,13 @@ def join_dfs(df1: pd.DataFrame,
 
     df = df1.append(df2)
     assert "article_id" in df.columns
+    print(
+        f"N articles joined batch before removing manual dupliactes: {df.article_id.nunique()}"
+    )
     df = df[~df.article_id.isin(duplicates_id)].copy()
+    print(
+        f"N articles joined batch after removing manual dupliactes: {df.article_id.nunique()}"
+    )
 
     return df
 
