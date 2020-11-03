@@ -20,7 +20,7 @@ contains either of these terms were selected:
 
 nudge theory, david halpern, nick chater, susan michie, richard thaler, cass sunstein, dan kahneman, daniel kahneman, behavioural science, behaviour change, behavioural scientist,  behavioural insight, libertarian paternalism, choice architecture, choice architect, behavioural analysis, behavioural analyst, behavioural insights team, nudge unit, behavioural economics, behavioural economist, behavioural policy, behavioural fatigue, herd immunity behaviour, herd immunity behavior, herd immunity behavioural science, herd immunity nudg, herd immunity nudge, herd immunity nudging, herd immunity nudge unit, herd immunity nudge theory, herd immunity behavioural, nudge strategy, nanny state behaviour, nanny state nudg, nudgetheory, davidhalpern, nickchater, susanmichie, richardthaler, casssunstein, dankahneman, danielkahneman, behaviouralscience, behaviourchange, behaviouralscientist, behaviouralinsight,  libertarianpaternalism, choicearchitecture, choicearchitect, behaviouralanalysis, behaviouralanalyst, behaviouralinsightsteam, nudgeunit, behaviouraleconomics, behaviouraleconomist, behaviouralpolicy, behaviouralfatigue, herdimmunity behaviouralscience, nudgestrategy, nannystate behaviour, nannystate nudg
 
-This resulted in a dataset of 16,568 tweets, corresponding to around 0.008% of the initial dataset.
+This resulted in a dataset of 13,664  tweets, corresponding to around 0.006% of the initial dataset.
 
 
 ## Dataset key figures
@@ -43,6 +43,6 @@ Link to the filtered dataset:
 
 ## Hydrating the tweets
 
-We used [Hydrator](https://github.com/DocNow/hydrator) to hydrate these tweets. Hydrator manages your Twitter API Rate Limits.
+We used [Hydrator](https://github.com/DocNow/hydrator) to hydrate these tweets, i.e., retreive the text of the tweets and associated metadata. Hydrator manages your Twitter API Rate Limits.
 
-After hydration, our sample consisted of 12,161 tweets.
+After hydration, our sample consisted of 12,161 tweets, corresponding to around 0.005% of the initial dataset. 
